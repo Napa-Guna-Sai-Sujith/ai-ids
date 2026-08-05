@@ -16,9 +16,9 @@ const pool = new Pool({
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
-// ── Ensure users table exists ───────────────────────────────
+// ── Ensure database tables exist ───────────────────────────
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -31,8 +31,19 @@ async function initDB() {
       last_login TIMESTAMPTZ DEFAULT NOW(),
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS user_datasets (
+      id SERIAL PRIMARY KEY,
+      user_email TEXT NOT NULL,
+      file_name TEXT NOT NULL,
+      file_size TEXT NOT NULL,
+      format TEXT NOT NULL,
+      records INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'Active',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
-  console.log('✅ Database table verified');
+  console.log('✅ Database tables (users & user_datasets) verified');
 }
 
 // ── POST /api/upsert-user ────────────────────────────────────
@@ -60,6 +71,44 @@ app.post('/api/upsert-user', async (req, res) => {
     res.json({ success: true, user: result.rows[0] });
   } catch (err) {
     console.error('❌ DB error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/upload-dataset ─────────────────────────────────
+app.post('/api/upload-dataset', async (req, res) => {
+  const { user_email, file_name, file_size, format, records } = req.body;
+
+  if (!user_email || !file_name) {
+    return res.status(400).json({ error: 'User email and file name are required' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO user_datasets (user_email, file_name, file_size, format, records, status)
+       VALUES ($1, $2, $3, $4, $5, 'Active')
+       RETURNING *`,
+      [user_email, file_name, file_size || '0 MB', format || 'CSV', records || 1000]
+    );
+
+    console.log(`✅ Dataset saved to Neon DB for ${user_email}: ${file_name}`);
+    res.json({ success: true, dataset: result.rows[0] });
+  } catch (err) {
+    console.error('❌ DB Dataset upload error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/datasets/:email ──────────────────────────────────
+app.get('/api/datasets/:email', async (req, res) => {
+  const { email } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM user_datasets WHERE user_email = $1 ORDER BY created_at DESC',
+      [email]
+    );
+    res.json(result.rows);
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

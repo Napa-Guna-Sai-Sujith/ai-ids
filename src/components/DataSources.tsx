@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, UploadCloud, CheckCircle2, AlertCircle, RefreshCw, Archive } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface DatasetFile {
   name: string;
@@ -24,6 +25,7 @@ interface ActiveUsage {
 }
 
 const MAX_FILE_SIZE_MB = 50;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -44,6 +46,7 @@ const getFormatIcon = (format: string) => {
 };
 
 export default function DataSources() {
+  const { user } = useAuth();
   const [datasetFiles, setDatasetFiles] = useState<DatasetFile[]>([
     { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
     { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
@@ -63,6 +66,30 @@ export default function DataSources() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [trainingStatus, setTrainingStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch saved datasets from Neon DB on mount
+  useEffect(() => {
+    if (!user?.email) return;
+    fetch(`${API_URL}/api/datasets/${encodeURIComponent(user.email)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const dbDatasets: DatasetFile[] = data.map(d => ({
+            name: d.file_name,
+            records: d.records || 10000,
+            size: d.file_size,
+            format: (d.format || 'CSV') as DatasetFile['format'],
+            status: d.status || 'Active',
+            lastUpdated: new Date(d.created_at).toLocaleDateString(),
+            recordsAnalyzed: d.records || 10000,
+            detectionCount: Math.floor(Math.random() * 500) + 50,
+            accuracy: 99.5,
+          }));
+          setDatasetFiles(prev => [...dbDatasets, ...prev]);
+        }
+      })
+      .catch(err => console.warn('Could not fetch DB datasets:', err));
+  }, [user?.email]);
 
   useEffect(() => {
     const attackTypes = ['DDoS', 'DoS', 'Brute Force', 'Bot Attack', 'Port Scan', 'Web Attack'];
@@ -138,6 +165,24 @@ export default function DataSources() {
       setDatasetFiles(prev => [newDataset, ...prev]);
       setUploadSuccess(`"${file.name}" uploaded successfully! AI auto-training started.`);
       setTrainingStatus(`Retraining AI Model on custom dataset "${file.name}"...`);
+
+      // Persist to Neon DB if user is logged in
+      if (user?.email) {
+        fetch(`${API_URL}/api/upload-dataset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_email: user.email,
+            file_name: file.name,
+            file_size: formattedSize,
+            format,
+            records: estimatedRecords,
+          }),
+        })
+          .then(res => res.json())
+          .then(d => console.log('Saved dataset to Neon DB:', d))
+          .catch(e => console.warn('Could not save dataset to Neon DB:', e));
+      }
 
       // Simulate Automated AI Model Retraining
       setTimeout(() => {
