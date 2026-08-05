@@ -1,0 +1,260 @@
+import { useState, useEffect } from 'react';
+import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText } from 'lucide-react';
+
+interface DatasetFile {
+  name: string;
+  records: number;
+  size: string;
+  format: 'CSV' | 'JSON' | 'XML' | 'PCAP' | 'LOG';
+  status: 'Active' | 'Processing' | 'Streaming';
+  lastUpdated: string;
+  recordsAnalyzed: number;
+  detectionCount: number;
+  accuracy: number;
+}
+
+interface ActiveUsage {
+  detectionId: string;
+  dataSource: string;
+  recordsAnalyzed: number;
+  status: 'Analyzed' | 'Processing' | 'Matched';
+  timestamp: string;
+  attackType: string;
+  confidence: number;
+}
+
+const formatNumber = (num: number): string => {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toString();
+};
+
+const getFormatIcon = (format: string) => {
+  switch (format) {
+    case 'CSV': return <FileSpreadsheet className="w-5 h-5 text-blue-400" />;
+    case 'JSON': return <FileJson className="w-5 h-5 text-yellow-400" />;
+    case 'XML': return <Code2 className="w-5 h-5 text-purple-400" />;
+    case 'PCAP': return <HardDrive className="w-5 h-5 text-green-400" />;
+    case 'LOG': return <FileText className="w-5 h-5 text-orange-400" />;
+    default: return <Database className="w-5 h-5 text-gray-400" />;
+  }
+};
+
+export default function DataSources() {
+  const datasetFiles: DatasetFile[] = [
+    { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
+    { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
+    { name: 'packet_capture_2024.pcap', records: 890000, size: '2.1 GB', format: 'PCAP', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 845000, detectionCount: 3421, accuracy: 98.9 },
+    { name: 'malware_indicators.xml', records: 15000, size: '850 KB', format: 'XML', status: 'Active', lastUpdated: '10 min ago', recordsAnalyzed: 15000, detectionCount: 567, accuracy: 99.5 },
+    { name: 'user_behavior_log.csv', records: 450000, size: '128 MB', format: 'CSV', status: 'Active', lastUpdated: '1 min ago', recordsAnalyzed: 448000, detectionCount: 2103, accuracy: 99.1 },
+    { name: 'firewall_events.log', records: 2100000, size: '560 MB', format: 'LOG', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 2050000, detectionCount: 4521, accuracy: 99.4 },
+    { name: 'dns_query_log.csv', records: 680000, size: '185 MB', format: 'CSV', status: 'Active', lastUpdated: '3 min ago', recordsAnalyzed: 675000, detectionCount: 1876, accuracy: 98.7 },
+    { name: 'ssl_certificate_data.json', records: 45000, size: '12 MB', format: 'JSON', status: 'Active', lastUpdated: '8 min ago', recordsAnalyzed: 45000, detectionCount: 234, accuracy: 99.9 },
+  ];
+
+  const [activeUsage, setActiveUsage] = useState<ActiveUsage[]>([]);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+
+  useEffect(() => {
+    const attackTypes = ['DDoS', 'DoS', 'Brute Force', 'Bot Attack', 'Port Scan', 'Web Attack'];
+    const interval = setInterval(() => {
+      const newUsage: ActiveUsage = {
+        detectionId: `DET-${Date.now().toString().slice(-6)}`,
+        dataSource: datasetFiles[Math.floor(Math.random() * datasetFiles.length)].name,
+        recordsAnalyzed: Math.floor(Math.random() * 5000) + 100,
+        status: Math.random() > 0.3 ? 'Analyzed' : 'Processing',
+        timestamp: new Date().toLocaleTimeString(),
+        attackType: attackTypes[Math.floor(Math.random() * attackTypes.length)],
+        confidence: Math.floor(Math.random() * 10) + 90,
+      };
+      setActiveUsage(prev => [newUsage, ...prev].slice(0, 20));
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const totalRecords = datasetFiles.reduce((sum, f) => sum + f.records, 0);
+  const totalDetections = datasetFiles.reduce((sum, f) => sum + f.detectionCount, 0);
+  const avgAccuracy = datasetFiles.reduce((sum, f) => sum + f.accuracy, 0) / datasetFiles.length;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-xl p-4 border border-blue-500/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Total Files</p>
+              <p className="text-2xl font-bold text-white">{datasetFiles.length}</p>
+            </div>
+            <Database className="w-8 h-8 text-blue-400" />
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-xl p-4 border border-purple-500/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Total Records</p>
+              <p className="text-2xl font-bold text-white">{formatNumber(totalRecords)}</p>
+            </div>
+            <Activity className="w-8 h-8 text-purple-400" />
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-xl p-4 border border-green-500/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Total Detections</p>
+              <p className="text-2xl font-bold text-white">{formatNumber(totalDetections)}</p>
+            </div>
+            <ShieldCheck className="w-8 h-8 text-green-400" />
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 rounded-xl p-4 border border-yellow-500/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Avg Accuracy</p>
+              <p className="text-2xl font-bold text-white">{avgAccuracy.toFixed(1)}%</p>
+            </div>
+            <Clock className="w-8 h-8 text-yellow-400" />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 overflow-hidden">
+        <div className="p-4 border-b border-gray-700/50">
+          <h3 className="text-lg font-semibold text-white">Dataset Files</h3>
+          <p className="text-gray-400 text-sm">All data sources being analyzed by the AI model</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-800/80">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">File Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Format</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Records</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Size</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Analyzed</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Detections</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Accuracy</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Last Updated</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700/50">
+              {datasetFiles.map((file, index) => (
+                <tr 
+                  key={index} 
+                  className={`hover:bg-gray-700/30 cursor-pointer transition-colors ${selectedFile === file.name ? 'bg-blue-500/10' : ''}`}
+                  onClick={() => setSelectedFile(selectedFile === file.name ? null : file.name)}
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {getFormatIcon(file.format)}
+                      <span className="text-white font-medium">{file.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-1 bg-gray-700/50 rounded text-xs text-gray-300">{file.format}</span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-300">{formatNumber(file.records)}</td>
+                  <td className="px-4 py-3 text-gray-300">{file.size}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${(file.recordsAnalyzed / file.records) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-gray-300 text-sm">{formatNumber(file.recordsAnalyzed)}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-gray-300">{formatNumber(file.detectionCount)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${file.accuracy}%` }}
+                        />
+                      </div>
+                      <span className="text-green-400 text-sm">{file.accuracy}%</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      file.status === 'Active' ? 'bg-green-500/20 text-green-400' :
+                      file.status === 'Streaming' ? 'bg-blue-500/20 text-blue-400' :
+                      'bg-yellow-500/20 text-yellow-400'
+                    }`}>
+                      {file.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400 text-sm">{file.lastUpdated}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 overflow-hidden">
+        <div className="p-4 border-b border-gray-700/50">
+          <h3 className="text-lg font-semibold text-white">Live Detection Data Usage</h3>
+          <p className="text-gray-400 text-sm">Real-time tracking of which data files are being used for each detection</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-800/80">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Detection ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Attack Type</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Data Source</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Records</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Confidence</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700/50">
+              {activeUsage.map((usage, index) => (
+                <tr key={index} className="hover:bg-gray-700/30 transition-colors">
+                  <td className="px-4 py-3 text-blue-400 font-mono text-sm">{usage.detectionId}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      usage.attackType === 'DDoS' ? 'bg-red-500/20 text-red-400' :
+                      usage.attackType === 'Brute Force' ? 'bg-orange-500/20 text-orange-400' :
+                      'bg-yellow-500/20 text-yellow-400'
+                    }`}>
+                      {usage.attackType}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-300 text-sm">{usage.dataSource}</td>
+                  <td className="px-4 py-3 text-gray-300">{formatNumber(usage.recordsAnalyzed)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${usage.confidence >= 95 ? 'bg-green-500' : usage.confidence >= 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                          style={{ width: `${usage.confidence}%` }}
+                        />
+                      </div>
+                      <span className={`text-sm ${usage.confidence >= 95 ? 'text-green-400' : usage.confidence >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        {usage.confidence}%
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      usage.status === 'Analyzed' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400 animate-pulse'
+                    }`}>
+                      {usage.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400 text-sm font-mono">{usage.timestamp}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
