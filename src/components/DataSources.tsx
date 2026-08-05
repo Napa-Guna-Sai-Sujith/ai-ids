@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, UploadCloud, CheckCircle2, AlertCircle, RefreshCw, Archive } from 'lucide-react';
 
 interface DatasetFile {
   name: string;
   records: number;
   size: string;
-  format: 'CSV' | 'JSON' | 'XML' | 'PCAP' | 'LOG';
-  status: 'Active' | 'Processing' | 'Streaming';
+  format: 'CSV' | 'JSON' | 'XML' | 'PCAP' | 'LOG' | 'ZIP';
+  status: 'Active' | 'Processing' | 'Streaming' | 'Training AI';
   lastUpdated: string;
   recordsAnalyzed: number;
   detectionCount: number;
@@ -23,6 +23,8 @@ interface ActiveUsage {
   confidence: number;
 }
 
+const MAX_FILE_SIZE_MB = 50;
+
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
   if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
@@ -36,31 +38,40 @@ const getFormatIcon = (format: string) => {
     case 'XML': return <Code2 className="w-5 h-5 text-purple-400" />;
     case 'PCAP': return <HardDrive className="w-5 h-5 text-green-400" />;
     case 'LOG': return <FileText className="w-5 h-5 text-orange-400" />;
+    case 'ZIP': return <Archive className="w-5 h-5 text-indigo-400" />;
     default: return <Database className="w-5 h-5 text-gray-400" />;
   }
 };
 
 export default function DataSources() {
-  const datasetFiles: DatasetFile[] = [
+  const [datasetFiles, setDatasetFiles] = useState<DatasetFile[]>([
     { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
     { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
     { name: 'packet_capture_2024.pcap', records: 890000, size: '2.1 GB', format: 'PCAP', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 845000, detectionCount: 3421, accuracy: 98.9 },
     { name: 'malware_indicators.xml', records: 15000, size: '850 KB', format: 'XML', status: 'Active', lastUpdated: '10 min ago', recordsAnalyzed: 15000, detectionCount: 567, accuracy: 99.5 },
     { name: 'user_behavior_log.csv', records: 450000, size: '128 MB', format: 'CSV', status: 'Active', lastUpdated: '1 min ago', recordsAnalyzed: 448000, detectionCount: 2103, accuracy: 99.1 },
     { name: 'firewall_events.log', records: 2100000, size: '560 MB', format: 'LOG', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 2050000, detectionCount: 4521, accuracy: 99.4 },
-    { name: 'dns_query_log.csv', records: 680000, size: '185 MB', format: 'CSV', status: 'Active', lastUpdated: '3 min ago', recordsAnalyzed: 675000, detectionCount: 1876, accuracy: 98.7 },
-    { name: 'ssl_certificate_data.json', records: 45000, size: '12 MB', format: 'JSON', status: 'Active', lastUpdated: '8 min ago', recordsAnalyzed: 45000, detectionCount: 234, accuracy: 99.9 },
-  ];
+  ]);
 
   const [activeUsage, setActiveUsage] = useState<ActiveUsage[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
+  // File Upload & AI Training States
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [trainingStatus, setTrainingStatus] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const attackTypes = ['DDoS', 'DoS', 'Brute Force', 'Bot Attack', 'Port Scan', 'Web Attack'];
     const interval = setInterval(() => {
+      if (datasetFiles.length === 0) return;
+      const randomFile = datasetFiles[Math.floor(Math.random() * datasetFiles.length)].name;
       const newUsage: ActiveUsage = {
         detectionId: `DET-${Date.now().toString().slice(-6)}`,
-        dataSource: datasetFiles[Math.floor(Math.random() * datasetFiles.length)].name,
+        dataSource: randomFile,
         recordsAnalyzed: Math.floor(Math.random() * 5000) + 100,
         status: Math.random() > 0.3 ? 'Analyzed' : 'Processing',
         timestamp: new Date().toLocaleTimeString(),
@@ -70,7 +81,80 @@ export default function DataSources() {
       setActiveUsage(prev => [newUsage, ...prev].slice(0, 20));
     }, 1500);
     return () => clearInterval(interval);
-  }, []);
+  }, [datasetFiles]);
+
+  const handleFileUpload = (file: File) => {
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    // Validate size limit (up to 50MB)
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB > MAX_FILE_SIZE_MB) {
+      setUploadError(`File "${file.name}" exceeds the maximum limit of ${MAX_FILE_SIZE_MB}MB (${fileSizeMB.toFixed(1)}MB).`);
+      return;
+    }
+
+    // Determine format
+    const ext = file.name.split('.').pop()?.toUpperCase() || 'CSV';
+    let format: DatasetFile['format'] = 'CSV';
+    if (['JSON', 'XML', 'PCAP', 'LOG', 'ZIP'].includes(ext)) {
+      format = ext as DatasetFile['format'];
+    }
+
+    setIsUploading(true);
+    setUploadProgress(10);
+
+    // Simulate Uploading Progress
+    const uploadInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(uploadInterval);
+          return 90;
+        }
+        return prev + 25;
+      });
+    }, 300);
+
+    setTimeout(() => {
+      clearInterval(uploadInterval);
+      setUploadProgress(100);
+      setIsUploading(false);
+
+      const estimatedRecords = Math.floor(fileSizeMB * 15000) || 5000;
+      const formattedSize = fileSizeMB < 1 ? `${(file.size / 1024).toFixed(0)} KB` : `${fileSizeMB.toFixed(1)} MB`;
+
+      const newDataset: DatasetFile = {
+        name: file.name,
+        records: estimatedRecords,
+        size: formattedSize,
+        format,
+        status: 'Training AI',
+        lastUpdated: 'Just now',
+        recordsAnalyzed: 0,
+        detectionCount: 0,
+        accuracy: 99.4,
+      };
+
+      setDatasetFiles(prev => [newDataset, ...prev]);
+      setUploadSuccess(`"${file.name}" uploaded successfully! AI auto-training started.`);
+      setTrainingStatus(`Retraining AI Model on custom dataset "${file.name}"...`);
+
+      // Simulate Automated AI Model Retraining
+      setTimeout(() => {
+        setDatasetFiles(prev =>
+          prev.map(f => (f.name === file.name ? { ...f, status: 'Active', recordsAnalyzed: estimatedRecords } : f))
+        );
+        setTrainingStatus(null);
+        setUploadSuccess(`AI model automatically updated and fine-tuned with ${file.name}!`);
+      }, 5000);
+    }, 1500);
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileUpload(e.target.files[0]);
+    }
+  };
 
   const totalRecords = datasetFiles.reduce((sum, f) => sum + f.records, 0);
   const totalDetections = datasetFiles.reduce((sum, f) => sum + f.detectionCount, 0);
@@ -78,6 +162,94 @@ export default function DataSources() {
 
   return (
     <div className="space-y-6">
+      {/* Upload & Auto-Train Section */}
+      <div className="bg-slate-800/80 dark:bg-gray-800/80 rounded-xl border border-slate-700/50 p-6 shadow-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <UploadCloud className="w-6 h-6 text-blue-500" />
+              Upload Custom Dataset & Auto-Train AI
+            </h3>
+            <p className="text-slate-400 text-sm mt-1">
+              Upload company dataset files (<span className="text-blue-400 font-medium">.zip, .csv, .pcap, .json, .log, .xml</span> up to <span className="text-amber-400 font-semibold">{MAX_FILE_SIZE_MB}MB</span>). The intrusion detection engine automatically retrains on your dataset.
+            </p>
+          </div>
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <UploadCloud className="w-4 h-4" />
+            Select Dataset File
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.json,.pcap,.xml,.log,.zip"
+            className="hidden"
+            onChange={onFileChange}
+          />
+        </div>
+
+        {/* Drag & Drop Zone */}
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+              handleFileUpload(e.dataTransfer.files[0]);
+            }
+          }}
+          className="border-2 border-dashed border-slate-600 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition-all bg-slate-900/40 hover:bg-slate-900/60"
+        >
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="p-3 bg-blue-500/10 rounded-full text-blue-400">
+              <Archive className="w-8 h-8" />
+            </div>
+            <p className="text-sm font-medium text-slate-200">
+              Drag & Drop company datasets here or <span className="text-blue-400 underline">browse</span>
+            </p>
+            <p className="text-xs text-slate-500">Supports ZIP archives, CSV, PCAP, JSON, XML log files (Max 50MB)</p>
+          </div>
+        </div>
+
+        {/* Progress & Feedback Notifications */}
+        {isUploading && (
+          <div className="mt-4 space-y-2">
+            <div className="flex justify-between text-xs text-slate-300 font-medium">
+              <span>Uploading dataset...</span>
+              <span>{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+              <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+            </div>
+          </div>
+        )}
+
+        {trainingStatus && (
+          <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl text-purple-300 text-sm flex items-center gap-3 animate-pulse">
+            <RefreshCw className="w-5 h-5 animate-spin text-purple-400" />
+            <span>{trainingStatus}</span>
+          </div>
+        )}
+
+        {uploadSuccess && !trainingStatus && (
+          <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>{uploadSuccess}</span>
+          </div>
+        )}
+
+        {uploadError && (
+          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            <span>{uploadError}</span>
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-xl p-4 border border-blue-500/20">
           <div className="flex items-center justify-between">
