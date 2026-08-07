@@ -13,6 +13,7 @@ import DataSources from './components/DataSources';
 import MLFeatures from './components/MLFeatures';
 import LiveStream from './components/LiveStream';
 import LoginPage from './components/LoginPage';
+import UserProfileModal from './components/UserProfileModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 type DashboardTab = 'overview' | 'livestream' | 'features' | 'network' | 'model' | 'threats' | 'health' | 'timeline' | 'datasources';
@@ -20,6 +21,7 @@ type DashboardTab = 'overview' | 'livestream' | 'features' | 'network' | 'model'
 function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   if (!user) {
     return <LoginPage />;
@@ -75,23 +77,31 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
               </p>
             </div>
             <div className="flex items-center gap-4">
-              {/* User Profile Avatar & Info */}
-              <div className={`flex items-center gap-3 px-3 py-1.5 rounded-xl border ${
-                isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
-              }`}>
+              {/* User Profile Avatar & Info — Click to edit profile */}
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                title="Edit Profile"
+                className={`flex items-center gap-3 px-3 py-1.5 rounded-xl border hover:ring-2 hover:ring-blue-500/50 transition-all cursor-pointer ${
+                  isDark ? 'bg-slate-800 border-slate-700 hover:bg-slate-700/80' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
                 <img src={user.picture} alt={user.name} className="w-7 h-7 rounded-full ring-2 ring-blue-500/50" />
                 <div className="text-left hidden sm:block">
-                  <p className="text-xs font-semibold">{user.name}</p>
+                  <p className="text-xs font-semibold flex items-center gap-1">
+                    {user.name}
+                    <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-normal">Edit ✏️</span>
+                  </p>
                   <p className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{user.email}</p>
                 </div>
-                <button
-                  onClick={logout}
-                  title="Logout"
-                  className="ml-1 text-xs text-red-400 hover:text-red-300 font-medium px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition-all cursor-pointer"
-                >
-                  Logout
-                </button>
-              </div>
+              </button>
+
+              <button
+                onClick={logout}
+                title="Logout"
+                className="text-xs text-red-400 hover:text-red-300 font-medium px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition-all cursor-pointer"
+              >
+                Logout
+              </button>
 
               {/* Theme Toggle Button */}
               <button
@@ -246,6 +256,9 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
           </div>
         </div>
       </footer>
+
+      {/* Editable User Profile Modal */}
+      <UserProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 }
