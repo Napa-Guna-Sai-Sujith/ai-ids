@@ -1,4 +1,4 @@
-// Neon PostgreSQL HTTP Serverless Driver for Direct Database Queries from Web App
+// Direct Neon PostgreSQL HTTP Serverless Service
 const NEON_DB_URL = 'postgresql://neondb_owner:npg_sdxZm0qb1oKN@ep-long-feather-ax3yoprj-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require';
 const NEON_HTTP_ENDPOINT = 'https://ep-long-feather-ax3yoprj-pooler.c-4.us-east-2.aws.neon.tech/sql';
 
@@ -15,12 +15,17 @@ export async function executeNeonQuery(sql: string, params: any[] = []) {
     const data = await res.json();
     return data;
   } catch (err) {
-    console.error('Neon Direct Query Error:', err);
+    console.error('❌ Neon Direct HTTP Query Error:', err);
     return null;
   }
 }
 
-export async function saveUserToNeonDirect(user: { email: string; name: string; picture?: string; sub?: string }, provider: string = 'email') {
+export async function saveUserToNeonDirect(
+  user: { email: string; name: string; picture?: string; sub?: string },
+  provider: string = 'email'
+) {
+  if (!user?.email) return null;
+
   const sql = `
     INSERT INTO users (google_sub, name, email, picture, provider, last_login)
     VALUES ($1, $2, $3, $4, $5, NOW())
@@ -31,24 +36,16 @@ export async function saveUserToNeonDirect(user: { email: string; name: string; 
           google_sub = COALESCE(EXCLUDED.google_sub, users.google_sub)
     RETURNING *;
   `;
-  const params = [user.sub || null, user.name, user.email, user.picture || null, provider];
-  
-  // Try Backend API first, fallback to Direct HTTP Neon Query if backend API is offline
-  const API_URL = import.meta.env.VITE_API_URL || '';
-  if (API_URL) {
-    try {
-      const apiRes = await fetch(`${API_URL}/api/upsert-user`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ google_sub: user.sub, name: user.name, email: user.email, picture: user.picture, provider }),
-      });
-      const data = await apiRes.json();
-      if (data.success) return data;
-    } catch {
-      // API call failed, fallback below
-    }
-  }
+  const params = [user.sub || null, user.name || user.email.split('@')[0], user.email, user.picture || null, provider];
 
-  // Direct Serverless Neon Query (works on Vercel & Render out-of-the-box without extra backend setup)
-  return await executeNeonQuery(sql, params);
+  console.log(`📡 Saving user ${user.email} directly to Neon DB...`);
+  const result = await executeNeonQuery(sql, params);
+  
+  if (result && result.rows) {
+    console.log('✅ User successfully saved to Neon DB:', result.rows[0]);
+  } else {
+    console.warn('⚠️ Could not save user to Neon DB:', result);
+  }
+  
+  return result;
 }
