@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { saveUserToNeonDirect } from '../services/neonDb';
 
 export interface User {
   id?: string;
@@ -16,32 +17,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// ── Calls backend API to store user in Neon PostgreSQL ────────
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-async function saveUserToDB(user: User, provider: string = 'email') {
-  try {
-    const res = await fetch(`${API_URL}/api/upsert-user`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        google_sub: user.sub || null,
-        name: user.name,
-        email: user.email,
-        picture: user.picture || null,
-        provider,
-      }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      console.log('✅ User saved to database:', data.user);
-    }
-  } catch (err) {
-    // Non-blocking — still logs in locally even if API is down
-    console.warn('⚠️ Could not save user to database:', err);
-  }
-}
 
 export const AuthProvider = ({ children, isDark }: { children: ReactNode; isDark: boolean }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -71,7 +46,7 @@ export const AuthProvider = ({ children, isDark }: { children: ReactNode; isDark
       const u: User = data.user;
       setUser(u);
       localStorage.setItem('ids_user', JSON.stringify(u));
-      saveUserToDB(u, 'email');
+      saveUserToNeonDirect(u, 'email');
       return;
     }
 
@@ -89,7 +64,7 @@ export const AuthProvider = ({ children, isDark }: { children: ReactNode; isDark
         };
         setUser(newUser);
         localStorage.setItem('ids_user', JSON.stringify(newUser));
-        saveUserToDB(newUser, 'google');
+        saveUserToNeonDirect(newUser, 'google');
         return;
       }
     }
@@ -103,7 +78,7 @@ export const AuthProvider = ({ children, isDark }: { children: ReactNode; isDark
     };
     setUser(fallbackUser);
     localStorage.setItem('ids_user', JSON.stringify(fallbackUser));
-    saveUserToDB(fallbackUser, 'email');
+    saveUserToNeonDirect(fallbackUser, 'email');
   };
 
   const logout = () => {
