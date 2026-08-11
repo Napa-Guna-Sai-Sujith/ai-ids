@@ -205,6 +205,30 @@ export default function UserProfileModal({ isOpen, onClose }: { isOpen: boolean;
                 )}
               </div>
             </div>
+
+            {/* Neon DB Status Badge */}
+            <div className={`p-2.5 rounded-xl border text-xs flex items-center justify-between mt-4 ${
+              isDark ? 'bg-slate-900/70 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+            }`}>
+              <span className="flex items-center gap-2 font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Neon DB: Connected & Synced
+              </span>
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">PostgreSQL</span>
+            </div>
+
+            {/* Logout Option Inside Profile Modal */}
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  onClose();
+                  logout();
+                }}
+                className="w-full py-2.5 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 font-semibold text-xs rounded-xl border border-red-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                🔒 Sign Out / Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>

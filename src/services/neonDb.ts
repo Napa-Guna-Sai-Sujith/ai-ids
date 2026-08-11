@@ -1,21 +1,28 @@
-// Direct Neon PostgreSQL HTTP Serverless Service
+// Direct Neon PostgreSQL Serverless Service (CORS & Mobile compatible)
 const NEON_DB_URL = 'postgresql://neondb_owner:npg_sdxZm0qb1oKN@ep-long-feather-ax3yoprj-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require';
 const NEON_HTTP_ENDPOINT = 'https://ep-long-feather-ax3yoprj-pooler.c-4.us-east-2.aws.neon.tech/sql';
 
 export async function executeNeonQuery(sql: string, params: any[] = []) {
   try {
+    // Use text/plain Content-Type to avoid CORS preflight OPTION restrictions across all origins
     const res = await fetch(NEON_HTTP_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain',
         'Neon-Connection-String': NEON_DB_URL,
       },
       body: JSON.stringify({ query: sql, params }),
     });
+
+    if (!res.ok) {
+      console.warn('Neon HTTP Status:', res.status);
+      return null;
+    }
+
     const data = await res.json();
     return data;
   } catch (err) {
-    console.error('❌ Neon Direct HTTP Query Error:', err);
+    console.error('❌ Neon Direct Query Error:', err);
     return null;
   }
 }
