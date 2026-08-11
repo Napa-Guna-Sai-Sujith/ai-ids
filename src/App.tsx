@@ -166,7 +166,7 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
       </nav>
 
       {/* Main Content */}
-      <main className="relative max-w-7xl mx-auto px-4 py-6">
+      <main className="relative max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8">
         {activeTab === 'overview' && (
           <div className="space-y-6 animate-fadeIn">
             <FlowDiagram />
