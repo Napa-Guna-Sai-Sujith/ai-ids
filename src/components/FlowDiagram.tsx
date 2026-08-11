@@ -9,8 +9,8 @@ export default function FlowDiagram() {
 
       <div className="relative flex flex-col md:flex-row items-center justify-center gap-0">
         {/* Step 1: Network Traffic */}
-        <div className="relative group">
-          <div className="w-64 h-48 rounded-2xl bg-gradient-to-br from-blue-600/20 to-blue-800/10 border border-blue-500/30 p-5 flex flex-col items-center justify-center text-center transition-all duration-300 group-hover:scale-105 group-hover:border-blue-400/50 group-hover:shadow-lg group-hover:shadow-blue-500/10">
+        <div className="relative group w-full max-w-[260px]">
+          <div className="w-full h-44 sm:h-48 rounded-2xl bg-gradient-to-br from-blue-600/20 to-blue-800/10 border border-blue-500/30 p-5 flex flex-col items-center justify-center text-center transition-all duration-300 group-hover:scale-105 group-hover:border-blue-400/50 group-hover:shadow-lg group-hover:shadow-blue-500/10">
             <div className="mb-3 p-3 bg-blue-500/10 rounded-xl">
               <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
                 <circle cx="24" cy="24" r="18" stroke="#3b82f6" strokeWidth="2" fill="rgba(59,130,246,0.1)" />
@@ -41,7 +41,7 @@ export default function FlowDiagram() {
         </div>
 
         {/* Arrow 1 */}
-        <div className="relative flex items-center justify-center w-20 md:w-32">
+        <div className="relative flex items-center justify-center my-3 md:my-0 w-20 md:w-32 rotate-90 md:rotate-0">
           <svg className="w-full" viewBox="0 0 120 60" fill="none">
             {/* Animated dashed line */}
             <line x1="0" y1="30" x2="90" y2="30" stroke="#3b82f6" strokeWidth="2" strokeDasharray="6 4" className="animate-dash" />
@@ -64,8 +64,8 @@ export default function FlowDiagram() {
         </div>
 
         {/* Step 2: AI Model */}
-        <div className="relative group">
-          <div className="w-64 h-48 rounded-2xl bg-gradient-to-br from-indigo-600/20 to-purple-800/10 border border-indigo-500/30 p-5 flex flex-col items-center justify-center text-center transition-all duration-300 group-hover:scale-105 group-hover:border-indigo-400/50 group-hover:shadow-lg group-hover:shadow-indigo-500/10">
+        <div className="relative group w-full max-w-[260px]">
+          <div className="w-full h-44 sm:h-48 rounded-2xl bg-gradient-to-br from-indigo-600/20 to-purple-800/10 border border-indigo-500/30 p-5 flex flex-col items-center justify-center text-center transition-all duration-300 group-hover:scale-105 group-hover:border-indigo-400/50 group-hover:shadow-lg group-hover:shadow-indigo-500/10">
             <div className="mb-3 p-3 bg-indigo-500/10 rounded-xl">
               <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
                 {/* Neural network */}
@@ -104,7 +104,7 @@ export default function FlowDiagram() {
         </div>
 
         {/* Arrow 2 */}
-        <div className="relative flex items-center justify-center w-20 md:w-32">
+        <div className="relative flex items-center justify-center my-3 md:my-0 w-20 md:w-32 rotate-90 md:rotate-0">
           <svg className="w-full" viewBox="0 0 120 60" fill="none">
             <line x1="0" y1="30" x2="90" y2="30" stroke="#ef4444" strokeWidth="2" strokeDasharray="6 4" className="animate-dash" />
             <path d="M88 22l10 8-10 8" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -124,8 +124,8 @@ export default function FlowDiagram() {
         </div>
 
         {/* Step 3: Attack Detection */}
-        <div className="relative group">
-          <div className="w-64 h-48 rounded-2xl bg-gradient-to-br from-red-600/20 to-red-800/10 border border-red-500/30 p-5 flex flex-col items-center justify-center text-center transition-all duration-300 group-hover:scale-105 group-hover:border-red-400/50 group-hover:shadow-lg group-hover:shadow-red-500/10">
+        <div className="relative group w-full max-w-[260px]">
+          <div className="w-full h-44 sm:h-48 rounded-2xl bg-gradient-to-br from-red-600/20 to-red-800/10 border border-red-500/30 p-5 flex flex-col items-center justify-center text-center transition-all duration-300 group-hover:scale-105 group-hover:border-red-400/50 group-hover:shadow-lg group-hover:shadow-red-500/10">
             <div className="mb-3 p-3 bg-red-500/10 rounded-xl">
               <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
                 <path d="M24 4L6 14v16c0 10 18 18 18 18s18-8 18-18V14L24 4z" stroke="#ef4444" strokeWidth="2" fill="rgba(239,68,68,0.1)" />

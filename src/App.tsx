@@ -58,34 +58,34 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
       {/* Header */}
       <header className={`relative backdrop-blur-md border-b sticky top-0 z-50 transition-colors duration-300 ${
         isDark
-          ? 'bg-gray-800/80 border-gray-700'
-          : 'bg-white/80 border-slate-200 shadow-sm'
+          ? 'bg-gray-800/90 border-gray-700'
+          : 'bg-white/90 border-slate-200 shadow-sm'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
-              <h1 className={`text-2xl font-bold flex items-center gap-3 ${
+              <h1 className={`text-lg sm:text-2xl font-bold flex items-center gap-2.5 ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
-                <svg className={`w-8 h-8 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-6 h-6 sm:w-8 sm:h-8 shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                Intrusion Detection System Dashboard
+                <span className="truncate">Intrusion Detection System Dashboard</span>
               </h1>
-              <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+              <p className={`text-xs sm:text-sm mt-0.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
                 AI-Powered Network Security Monitoring
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between md:justify-end gap-2 sm:gap-4 overflow-x-auto">
               {/* User Profile Avatar & Info — Click to edit profile */}
               <button
                 onClick={() => setIsProfileOpen(true)}
                 title="Edit Profile"
-                className={`flex items-center gap-3 px-3 py-1.5 rounded-xl border hover:ring-2 hover:ring-blue-500/50 transition-all cursor-pointer ${
+                className={`flex items-center gap-2.5 px-2.5 sm:px-3 py-1.5 rounded-xl border hover:ring-2 hover:ring-blue-500/50 transition-all cursor-pointer ${
                   isDark ? 'bg-slate-800 border-slate-700 hover:bg-slate-700/80' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                <img src={user.picture} alt={user.name} className="w-7 h-7 rounded-full ring-2 ring-blue-500/50" />
+                <img src={user.picture} alt={user.name} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full ring-2 ring-blue-500/50" />
                 <div className="text-left hidden sm:block">
                   <p className="text-xs font-semibold flex items-center gap-1">
                     {user.name}
@@ -98,7 +98,7 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
               <button
                 onClick={logout}
                 title="Logout"
-                className="text-xs text-red-400 hover:text-red-300 font-medium px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition-all cursor-pointer"
+                className="text-xs text-red-400 hover:text-red-300 font-medium px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 transition-all cursor-pointer whitespace-nowrap"
               >
                 Logout
               </button>
@@ -107,7 +107,7 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
               <button
                 onClick={toggleTheme}
                 aria-label="Toggle light and dark mode"
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border font-medium text-sm transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border font-medium text-xs sm:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${
                   isDark
                     ? 'bg-gray-700/60 border-gray-600 text-yellow-300 hover:bg-gray-700 hover:text-yellow-200'
                     : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
@@ -115,20 +115,20 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
               >
                 {isDark ? (
                   <>
-                    <span className="text-base">☀️</span> Light Mode
+                    <span>☀️</span> <span className="hidden sm:inline">Light Mode</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-base">🌙</span> Dark Mode
+                    <span>🌙</span> <span className="hidden sm:inline">Dark Mode</span>
                   </>
                 )}
               </button>
 
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl ${
                 isDark ? 'bg-green-500/20' : 'bg-green-100 border border-green-200'
               }`}>
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className={`text-sm font-semibold ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+                <span className={`text-xs sm:text-sm font-semibold ${isDark ? 'text-green-400' : 'text-green-700'}`}>
                   System Active
                 </span>
               </div>
@@ -138,16 +138,16 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
       </header>
 
       {/* Navigation Tabs */}
-      <nav className={`relative border-b transition-colors duration-300 ${
-        isDark ? 'bg-gray-800/50 border-gray-700' : 'bg-white/60 border-slate-200'
+      <nav className={`relative border-b transition-colors duration-300 sticky top-[57px] sm:top-[73px] z-40 ${
+        isDark ? 'bg-gray-800/90 border-gray-700 backdrop-blur-md' : 'bg-white/90 border-slate-200 shadow-sm backdrop-blur-md'
       }`}>
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-1 overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4">
+          <div className="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth py-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 text-sm font-medium transition-all border-b-2 cursor-pointer ${
+                className={`px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 whitespace-nowrap cursor-pointer rounded-t-lg ${
                   activeTab === tab.id
                     ? isDark
                       ? 'text-blue-400 border-blue-400 bg-blue-500/10'
@@ -157,7 +157,7 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
                       : 'text-slate-600 border-transparent hover:text-slate-900 hover:border-slate-300'
                 }`}
               >
-                <span className="mr-2">{tab.icon}</span>
+                <span className="mr-1.5">{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
