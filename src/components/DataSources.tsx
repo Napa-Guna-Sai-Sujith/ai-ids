@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, UploadCloud, CheckCircle2, AlertCircle, RefreshCw, Archive } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { fetchUserDatasetsFromNeon, saveDatasetToNeonDirect } from '../services/neonDb';
 
 interface DatasetFile {
   name: string;
@@ -25,7 +26,6 @@ interface ActiveUsage {
 }
 
 const MAX_FILE_SIZE_MB = 50;
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -70,17 +70,16 @@ export default function DataSources() {
   // Fetch saved datasets from Neon DB on mount
   useEffect(() => {
     if (!user?.email) return;
-    fetch(`${API_URL}/api/datasets/${encodeURIComponent(user.email)}`)
-      .then(res => res.json())
+    fetchUserDatasetsFromNeon(user.email)
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          const dbDatasets: DatasetFile[] = data.map(d => ({
+          const dbDatasets: DatasetFile[] = data.map((d: any) => ({
             name: d.file_name,
             records: d.records || 10000,
             size: d.file_size,
             format: (d.format || 'CSV') as DatasetFile['format'],
             status: d.status || 'Active',
-            lastUpdated: new Date(d.created_at).toLocaleDateString(),
+            lastUpdated: d.created_at ? new Date(d.created_at).toLocaleDateString() : 'Recent',
             recordsAnalyzed: d.records || 10000,
             detectionCount: Math.floor(Math.random() * 500) + 50,
             accuracy: 99.5,
@@ -168,20 +167,13 @@ export default function DataSources() {
 
       // Persist to Neon DB if user is logged in
       if (user?.email) {
-        fetch(`${API_URL}/api/upload-dataset`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_email: user.email,
-            file_name: file.name,
-            file_size: formattedSize,
-            format,
-            records: estimatedRecords,
-          }),
-        })
-          .then(res => res.json())
-          .then(d => console.log('Saved dataset to Neon DB:', d))
-          .catch(e => console.warn('Could not save dataset to Neon DB:', e));
+        saveDatasetToNeonDirect({
+          user_email: user.email,
+          file_name: file.name,
+          file_size: formattedSize,
+          format,
+          records: estimatedRecords,
+        });
       }
 
       // Simulate Automated AI Model Retraining

@@ -56,3 +56,37 @@ export async function saveUserToNeonDirect(
   
   return result;
 }
+
+export async function saveDatasetToNeonDirect(dataset: {
+  user_email: string;
+  file_name: string;
+  file_size: string;
+  format: string;
+  records: number;
+}) {
+  if (!dataset?.user_email) return null;
+
+  const sql = `
+    INSERT INTO user_datasets (user_email, file_name, file_size, format, records, status)
+    VALUES ($1, $2, $3, $4, $5, 'Active')
+    RETURNING *;
+  `;
+  const params = [dataset.user_email, dataset.file_name, dataset.file_size, dataset.format, dataset.records];
+
+  console.log(`📁 Saving dataset "${dataset.file_name}" to Neon DB for ${dataset.user_email}...`);
+  const result = await executeNeonQuery(sql, params);
+  if (result && result.rows) {
+    console.log('✅ Dataset saved to Neon DB:', result.rows[0]);
+  }
+  return result;
+}
+
+export async function fetchUserDatasetsFromNeon(email: string) {
+  if (!email) return [];
+  const sql = `SELECT * FROM user_datasets WHERE user_email = $1 ORDER BY created_at DESC;`;
+  const result = await executeNeonQuery(sql, [email]);
+  if (result && result.rows) {
+    return result.rows;
+  }
+  return [];
+}
