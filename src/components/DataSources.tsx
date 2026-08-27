@@ -90,24 +90,72 @@ export default function DataSources() {
       .catch(err => console.warn('Could not fetch DB datasets:', err));
   }, [user?.email]);
 
+  // Track which files have detection active (switched ON)
+  const [activeSwitches, setActiveSwitches] = useState<{ [fileName: string]: boolean }>({});
+
+  const toggleFileDetection = (fileName: string) => {
+    setActiveSwitches(prev => {
+      const isCurrentlyActive = !!prev[fileName];
+      const updated = { ...prev, [fileName]: !isCurrentlyActive };
+      
+      // Update file status in state
+      setDatasetFiles(files =>
+        files.map(f => {
+          if (f.name === fileName) {
+            return {
+              ...f,
+              status: !isCurrentlyActive ? 'Streaming' : 'Active',
+            };
+          }
+          return f;
+        })
+      );
+
+      return updated;
+    });
+  };
+
+  // Generate detections ONLY from files that have their switch turned ON
   useEffect(() => {
+    const activeFileNames = Object.keys(activeSwitches).filter(name => activeSwitches[name]);
+    if (activeFileNames.length === 0) return;
+
     const attackTypes = ['DDoS', 'DoS', 'Brute Force', 'Bot Attack', 'Port Scan', 'Web Attack'];
     const interval = setInterval(() => {
-      if (datasetFiles.length === 0) return;
-      const randomFile = datasetFiles[Math.floor(Math.random() * datasetFiles.length)].name;
+      // Select a random file ONLY from currently enabled switches
+      const targetFileName = activeFileNames[Math.floor(Math.random() * activeFileNames.length)];
+      
       const newUsage: ActiveUsage = {
         detectionId: `DET-${Date.now().toString().slice(-6)}`,
-        dataSource: randomFile,
+        dataSource: targetFileName,
         recordsAnalyzed: Math.floor(Math.random() * 5000) + 100,
         status: Math.random() > 0.3 ? 'Analyzed' : 'Processing',
         timestamp: new Date().toLocaleTimeString(),
         attackType: attackTypes[Math.floor(Math.random() * attackTypes.length)],
         confidence: Math.floor(Math.random() * 10) + 90,
       };
+
       setActiveUsage(prev => [newUsage, ...prev].slice(0, 20));
-    }, 1500);
+
+      // Increment analyzed records & detection count for the target file
+      setDatasetFiles(files =>
+        files.map(f => {
+          if (f.name === targetFileName) {
+            const addedDetections = Math.random() > 0.4 ? 1 : 0;
+            return {
+              ...f,
+              recordsAnalyzed: Math.min(f.records, f.recordsAnalyzed + newUsage.recordsAnalyzed),
+              detectionCount: f.detectionCount + addedDetections,
+              lastUpdated: 'Just now',
+            };
+          }
+          return f;
+        })
+      );
+    }, 2000);
+
     return () => clearInterval(interval);
-  }, [datasetFiles]);
+  }, [activeSwitches]);
 
   const handleFileUpload = (file: File) => {
     setUploadError(null);
@@ -336,6 +384,7 @@ export default function DataSources() {
             <thead className="bg-gray-800/80">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">File Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Detection Switch</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Format</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Records</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Size</th>
@@ -347,58 +396,79 @@ export default function DataSources() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700/50">
-              {datasetFiles.map((file, index) => (
-                <tr 
-                  key={index} 
-                  className={`hover:bg-gray-700/30 cursor-pointer transition-colors ${selectedFile === file.name ? 'bg-blue-500/10' : ''}`}
-                  onClick={() => setSelectedFile(selectedFile === file.name ? null : file.name)}
-                >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {getFormatIcon(file.format)}
-                      <span className="text-white font-medium">{file.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-1 bg-gray-700/50 rounded text-xs text-gray-300">{file.format}</span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-300">{formatNumber(file.records)}</td>
-                  <td className="px-4 py-3 text-gray-300">{file.size}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${(file.recordsAnalyzed / file.records) * 100}%` }}
-                        />
+              {datasetFiles.map((file, index) => {
+                const isSwitchedOn = !!activeSwitches[file.name];
+                return (
+                  <tr 
+                    key={index} 
+                    className={`hover:bg-gray-700/30 transition-colors ${isSwitchedOn ? 'bg-blue-500/10' : ''}`}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {getFormatIcon(file.format)}
+                        <span className="text-white font-medium">{file.name}</span>
                       </div>
-                      <span className="text-gray-300 text-sm">{formatNumber(file.recordsAnalyzed)}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-300">{formatNumber(file.detectionCount)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${file.accuracy}%` }}
+                    </td>
+                    {/* Interactive Detection Switch Button */}
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleFileDetection(file.name)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          isSwitchedOn ? 'bg-blue-600' : 'bg-gray-700'
+                        }`}
+                      >
+                        <span className="sr-only">Toggle Detection</span>
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                            isSwitchedOn ? 'translate-x-5' : 'translate-x-0'
+                          }`}
                         />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-1 bg-gray-700/50 rounded text-xs text-gray-300">{file.format}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-300">{formatNumber(file.records)}</td>
+                    <td className="px-4 py-3 text-gray-300">{file.size}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${(file.recordsAnalyzed / file.records) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-gray-300 text-sm">{formatNumber(file.recordsAnalyzed)}</span>
                       </div>
-                      <span className="text-green-400 text-sm">{file.accuracy}%</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      file.status === 'Active' ? 'bg-green-500/20 text-green-400' :
-                      file.status === 'Streaming' ? 'bg-blue-500/20 text-blue-400' :
-                      'bg-yellow-500/20 text-yellow-400'
-                    }`}>
-                      {file.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-sm">{file.lastUpdated}</td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-3 text-gray-300">{formatNumber(file.detectionCount)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${file.accuracy}%` }}
+                          />
+                        </div>
+                        <span className="text-green-400 text-sm">{file.accuracy}%</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center w-max gap-1.5 ${
+                        isSwitchedOn ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                        file.status === 'Active' ? 'bg-green-500/20 text-green-400' :
+                        file.status === 'Streaming' ? 'bg-blue-500/20 text-blue-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {isSwitchedOn && <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />}
+                        {isSwitchedOn ? 'Detecting' : file.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-sm">{file.lastUpdated}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
