@@ -1,17 +1,30 @@
 import { useState, useEffect } from 'react';
 import { DetectionState } from '../types';
+import { useDetection } from '../context/DetectionContext';
 
 export default function DetectionStatus() {
+  const { isDetectionActive, activeFileNames } = useDetection();
+
   const [state, setState] = useState<DetectionState>({
     isNormal: true,
-    lastScan: new Date().toLocaleTimeString(),
+    lastScan: 'STANDBY (No Data Source Active)',
     threatsBlocked: 1247,
-    activeConnections: 89,
+    activeConnections: 0,
   });
 
   const [flashAttack, setFlashAttack] = useState(false);
 
   useEffect(() => {
+    if (!isDetectionActive) {
+      setState((prev) => ({
+        ...prev,
+        isNormal: true,
+        lastScan: 'IDLE (Turn ON a Data Source)',
+        activeConnections: 0,
+      }));
+      return;
+    }
+
     const interval = setInterval(() => {
       const isNormal = Math.random() > 0.3;
       setState((prev) => ({
@@ -26,7 +39,7 @@ export default function DetectionStatus() {
       }
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isDetectionActive]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">

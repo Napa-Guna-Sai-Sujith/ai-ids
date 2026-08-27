@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, UploadCloud, CheckCircle2, AlertCircle, RefreshCw, Archive } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useDetection } from '../context/DetectionContext';
 import { fetchUserDatasetsFromNeon, saveDatasetToNeonDirect } from '../services/neonDb';
 
 interface DatasetFile {
@@ -47,6 +48,8 @@ const getFormatIcon = (format: string) => {
 
 export default function DataSources() {
   const { user } = useAuth();
+  const { activeSwitches, activeFileNames, toggleFileDetection } = useDetection();
+
   const [datasetFiles, setDatasetFiles] = useState<DatasetFile[]>([
     { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
     { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
@@ -90,34 +93,8 @@ export default function DataSources() {
       .catch(err => console.warn('Could not fetch DB datasets:', err));
   }, [user?.email]);
 
-  // Track which files have detection active (switched ON)
-  const [activeSwitches, setActiveSwitches] = useState<{ [fileName: string]: boolean }>({});
-
-  const toggleFileDetection = (fileName: string) => {
-    setActiveSwitches(prev => {
-      const isCurrentlyActive = !!prev[fileName];
-      const updated = { ...prev, [fileName]: !isCurrentlyActive };
-      
-      // Update file status in state
-      setDatasetFiles(files =>
-        files.map(f => {
-          if (f.name === fileName) {
-            return {
-              ...f,
-              status: !isCurrentlyActive ? 'Streaming' : 'Active',
-            };
-          }
-          return f;
-        })
-      );
-
-      return updated;
-    });
-  };
-
   // Generate detections ONLY from files that have their switch turned ON
   useEffect(() => {
-    const activeFileNames = Object.keys(activeSwitches).filter(name => activeSwitches[name]);
     if (activeFileNames.length === 0) return;
 
     const attackTypes = ['DDoS', 'DoS', 'Brute Force', 'Bot Attack', 'Port Scan', 'Web Attack'];
@@ -155,7 +132,7 @@ export default function DataSources() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [activeSwitches]);
+  }, [activeFileNames]);
 
   const handleFileUpload = (file: File) => {
     setUploadError(null);

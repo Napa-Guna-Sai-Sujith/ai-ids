@@ -15,11 +15,13 @@ import LiveStream from './components/LiveStream';
 import LoginPage from './components/LoginPage';
 import UserProfileModal from './components/UserProfileModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { DetectionProvider, useDetection } from './context/DetectionContext';
 
 type DashboardTab = 'overview' | 'livestream' | 'features' | 'network' | 'model' | 'threats' | 'health' | 'timeline' | 'datasources';
 
 function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) {
   const { user, logout } = useAuth();
+  const { isDetectionActive, activeFileNames } = useDetection();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -124,12 +126,15 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
                 )}
               </button>
 
+              {/* Dynamic System Status Pill */}
               <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl ${
-                isDark ? 'bg-green-500/20' : 'bg-green-100 border border-green-200'
+                isDetectionActive
+                  ? isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700 border border-green-200'
+                  : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700 border border-amber-200'
               }`}>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className={`text-xs sm:text-sm font-semibold ${isDark ? 'text-green-400' : 'text-green-700'}`}>
-                  System Active
+                <div className={`w-2 h-2 rounded-full ${isDetectionActive ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`}></div>
+                <span className="text-xs sm:text-sm font-semibold">
+                  {isDetectionActive ? `Active: ${activeFileNames[0]}` : 'System Standby'}
                 </span>
               </div>
             </div>
@@ -286,7 +291,9 @@ function App() {
 
   return (
     <AuthProvider isDark={isDark}>
-      <DashboardContent isDark={isDark} toggleTheme={toggleTheme} />
+      <DetectionProvider>
+        <DashboardContent isDark={isDark} toggleTheme={toggleTheme} />
+      </DetectionProvider>
     </AuthProvider>
   );
 }

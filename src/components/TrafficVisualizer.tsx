@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useDetection } from '../context/DetectionContext';
 
 interface Particle {
   id: number;
@@ -11,6 +12,7 @@ interface Particle {
 }
 
 export default function TrafficVisualizer() {
+  const { isDetectionActive } = useDetection();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const [stats, setStats] = useState({ normal: 0, suspicious: 0, attack: 0 });
@@ -43,77 +45,64 @@ export default function TrafficVisualizer() {
     function frame() {
       const w = canvas.offsetWidth;
       const h = canvas.offsetHeight;
-
       ctx.clearRect(0, 0, w, h);
 
-      if (particles.length < 80) {
-        for (let i = 0; i < 3; i++) particles.push(spawnParticle());
+      // Grid lines
+      ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
       }
 
-      // Grid
-      ctx.strokeStyle = 'rgba(51, 65, 85, 0.15)';
-      ctx.lineWidth = 0.5;
-      for (let gx = 0; gx < w; gx += 40) {
-        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
+      // Only spawn particles if detection is ACTIVE
+      if (isDetectionActive && Math.random() < 0.4) {
+        particles.push(spawnParticle());
       }
-      for (let gy = 0; gy < h; gy += 40) {
-        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
-      }
-
-      particles = particles.filter((p) => p.x < w + 20);
 
       particles.forEach((p) => {
         p.x += p.speed;
-        p.y += Math.sin(p.x * 0.02) * 0.5;
-
-        ctx.globalAlpha = 0.8;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         ctx.fill();
 
-        ctx.globalAlpha = 0.3;
-        ctx.beginPath();
-        ctx.moveTo(p.x - p.speed * 4, p.y);
-        ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = p.color;
-        ctx.lineWidth = p.size * 0.5;
-        ctx.stroke();
-
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
-        gradient.addColorStop(0, p.color);
-        gradient.addColorStop(1, 'transparent');
-        ctx.globalAlpha = 0.15;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
+        // Glow effect
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
         ctx.fill();
+        ctx.shadowBlur = 0;
       });
 
-      ctx.globalAlpha = 1;
+      // Filter out off-screen particles
+      particles = particles.filter((p) => p.x < w + 20);
 
-      setStats({
-        normal: particles.filter((p) => p.type === 'normal').length,
-        suspicious: particles.filter((p) => p.type === 'suspicious').length,
-        attack: particles.filter((p) => p.type === 'attack').length,
-      });
+      // Update counters
+      const n = particles.filter((p) => p.type === 'normal').length;
+      const s = particles.filter((p) => p.type === 'suspicious').length;
+      const a = particles.filter((p) => p.type === 'attack').length;
+      setStats({ normal: n, suspicious: s, attack: a });
 
       animRef.current = requestAnimationFrame(frame);
     }
 
     frame();
-  }, []);
+  }, [isDetectionActive]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = canvas.offsetWidth * dpr;
-    canvas.height = canvas.offsetHeight * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const handleResize = () => {
       const dpr2 = window.devicePixelRatio || 1;
@@ -121,8 +110,9 @@ export default function TrafficVisualizer() {
       canvas.height = canvas.offsetHeight * dpr2;
       ctx.setTransform(dpr2, 0, 0, dpr2, 0, 0);
     };
-    window.addEventListener('resize', handleResize);
+    handleResize();
 
+    window.addEventListener('resize', handleResize);
     animate(canvas, ctx);
 
     return () => {
@@ -139,8 +129,10 @@ export default function TrafficVisualizer() {
           <h2 className="text-2xl font-bold text-white">Network Traffic Monitor</h2>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-xs text-green-400 font-mono">LIVE</span>
+          <span className={`w-2 h-2 rounded-full ${isDetectionActive ? 'bg-green-400 animate-pulse' : 'bg-amber-400'}`} />
+          <span className={`text-xs font-mono ${isDetectionActive ? 'text-green-400' : 'text-amber-400'}`}>
+            {isDetectionActive ? 'LIVE' : 'STANDBY / IDLE'}
+          </span>
         </div>
       </div>
 
