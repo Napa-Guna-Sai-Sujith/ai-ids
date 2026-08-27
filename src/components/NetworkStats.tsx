@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useDetection } from '../context/DetectionContext';
 
 interface NetworkStat {
   label: string;
@@ -15,11 +16,12 @@ interface PacketData {
 }
 
 export default function NetworkStats() {
+  const { isDetectionActive } = useDetection();
   const [stats, setStats] = useState<NetworkStat[]>([
     { label: 'Total Packets', value: '0', change: 0, unit: 'pkts' },
-    { label: 'Throughput', value: '0', change: 0, unit: 'Mbps' },
+    { label: 'Throughput', value: '0.0', change: 0, unit: 'Mbps' },
     { label: 'Active Connections', value: '0', change: 0, unit: 'conn' },
-    { label: 'Bandwidth Usage', value: '0', change: 0, unit: 'GB' },
+    { label: 'Bandwidth Usage', value: '0.00', change: 0, unit: 'GB' },
   ]);
 
   const [packetHistory, setPacketHistory] = useState<PacketData[]>([]);
@@ -30,7 +32,7 @@ export default function NetworkStats() {
     { name: 'HTTPS', percentage: 10, color: '#EF4444' },
   ]);
 
-  const [topSources, setTopSources] = useState([
+  const [topSources] = useState([
     { ip: '192.168.1.100', packets: 15420, percentage: 25 },
     { ip: '192.168.1.101', packets: 12350, percentage: 20 },
     { ip: '10.0.0.50', packets: 9870, percentage: 16 },
@@ -41,6 +43,17 @@ export default function NetworkStats() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    if (!isDetectionActive) {
+      setStats([
+        { label: 'Total Packets', value: '0', change: 0, unit: 'pkts' },
+        { label: 'Throughput', value: '0.0', change: 0, unit: 'Mbps' },
+        { label: 'Active Connections', value: '0', change: 0, unit: 'conn' },
+        { label: 'Bandwidth Usage', value: '0.00', change: 0, unit: 'GB' },
+      ]);
+      setPacketHistory([]);
+      return;
+    }
+
     let totalPackets = 1250000;
     let totalBytes = 45000000000;
     let activeConnections = 2340;
@@ -85,7 +98,7 @@ export default function NetworkStats() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isDetectionActive]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

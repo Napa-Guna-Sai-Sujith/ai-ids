@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useDetection } from '../context/DetectionContext';
 
 interface TimelineEvent {
   id: string;
@@ -11,10 +12,16 @@ interface TimelineEvent {
 }
 
 export default function AttackTimeline() {
+  const { isDetectionActive } = useDetection();
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [filter, setFilter] = useState<'all' | 'attack' | 'block' | 'alert' | 'scan'>('all');
 
   useEffect(() => {
+    if (!isDetectionActive) {
+      setEvents([]);
+      return;
+    }
+
     const eventTypes: Array<TimelineEvent['eventType']> = ['attack', 'block', 'alert', 'scan'];
     const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
     const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
@@ -43,7 +50,7 @@ export default function AttackTimeline() {
     };
 
     // Initial events
-    const initialEvents = Array.from({ length: 20 }, generateEvent);
+    const initialEvents = Array.from({ length: 10 }, generateEvent);
     setEvents(initialEvents);
 
     const interval = setInterval(() => {
@@ -54,7 +61,7 @@ export default function AttackTimeline() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isDetectionActive]);
 
   const filteredEvents = filter === 'all' ? events : events.filter(e => e.eventType === filter);
 
