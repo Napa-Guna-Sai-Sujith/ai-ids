@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AttackTypeName } from '../types';
+import { useDetection } from '../context/DetectionContext';
 
 interface DetectionEvent {
   id: string;
@@ -24,6 +25,7 @@ const getAttackColor = (attackType: AttackTypeName): string => {
 };
 
 export const DetectionHistory: React.FC = () => {
+  const { isDetectionActive } = useDetection();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detections, setDetections] = useState<DetectionEvent[]>([]);
   const [chartData, setChartData] = useState<number[]>(new Array(24).fill(0));
@@ -61,8 +63,12 @@ export const DetectionHistory: React.FC = () => {
     };
   };
 
-  // Simulate incoming detections
+  // Simulate incoming detections ONLY when isDetectionActive is true
   useEffect(() => {
+    if (!isDetectionActive) {
+      return;
+    }
+
     const interval = setInterval(() => {
       if (Math.random() > 0.4) {
         const newDetection = generateDetection();
@@ -78,7 +84,7 @@ export const DetectionHistory: React.FC = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isDetectionActive]);
 
   // Draw chart
   useEffect(() => {
@@ -224,11 +230,14 @@ export const DetectionHistory: React.FC = () => {
         </div>
         <div className="max-h-64 overflow-y-auto">
           {detections.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p>Waiting for detections...</p>
+            <div className="py-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+              <div className="p-3 bg-amber-500/10 rounded-full text-amber-400 mb-1">
+                🛡️
+              </div>
+              <p className="text-sm font-medium text-white">System in Standby Mode</p>
+              <p className="text-xs text-slate-400 max-w-sm">
+                Turn ON a dataset switch in the <span className="text-blue-400 font-semibold">Data Sources</span> tab to begin live threat detection logging.
+              </p>
             </div>
           ) : (
             <table className="w-full">

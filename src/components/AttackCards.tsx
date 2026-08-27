@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import attackData from '../data/attacks';
 import AttackCard from './AttackCard';
+import { useDetection } from '../context/DetectionContext';
 
 export default function AttackCards() {
+  const { isDetectionActive } = useDetection();
   const [detectedAttacks, setDetectedAttacks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    if (!isDetectionActive) {
+      setDetectedAttacks(new Set());
+      return;
+    }
+
     const interval = setInterval(() => {
       // Randomly toggle some attacks as detected
-      const numDetected = Math.floor(Math.random() * 3);
+      const numDetected = Math.floor(Math.random() * 3) + 1;
       const newDetected = new Set<string>();
       const shuffled = [...attackData].sort(() => Math.random() - 0.5);
       for (let i = 0; i < numDetected; i++) {
@@ -17,7 +24,7 @@ export default function AttackCards() {
       setDetectedAttacks(newDetected);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isDetectionActive]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Radio, Wifi, AlertTriangle, CheckCircle2, Zap } from 'lucide-react';
 import { realTimeService, RealTimeFlow, RealTimeStats } from '../services/realTimeData';
+import { useDetection } from '../context/DetectionContext';
 
 const attackColors: Record<string, string> = {
   BENIGN: 'text-green-400 bg-green-500/10 border-green-500/30',
@@ -13,6 +14,7 @@ const attackColors: Record<string, string> = {
 };
 
 export default function LiveStream() {
+  const { isDetectionActive } = useDetection();
   const [flows, setFlows] = useState<RealTimeFlow[]>([]);
   const [stats, setStats] = useState<RealTimeStats | null>(null);
   const [paused, setPaused] = useState(false);
@@ -23,13 +25,18 @@ export default function LiveStream() {
   useEffect(() => { pausedRef.current = paused; }, [paused]);
 
   useEffect(() => {
+    if (!isDetectionActive) {
+      setFlows([]);
+      return;
+    }
+
     const unsubFlow = realTimeService.subscribe((flow) => {
       if (pausedRef.current) return;
       setFlows(prev => [flow, ...prev].slice(0, 100)); // Increase buffer
     });
     const unsubStats = realTimeService.subscribeStats((s) => setStats(s));
     return () => { unsubFlow(); unsubStats(); };
-  }, []);
+  }, [isDetectionActive]);
 
   const visibleFlows = flows.filter(f => {
     const typeMatch = selectedAttackType === 'All' || f.prediction.label === selectedAttackType;
