@@ -16,7 +16,7 @@ export default function AttackTimeline() {
 
   useEffect(() => {
     const eventTypes: Array<TimelineEvent['eventType']> = ['attack', 'block', 'alert', 'scan'];
-    const attackTypes = ['DDoS', 'DoS', 'Brute Force', 'Bot Attack', 'Port Scan', 'Web Attack'];
+    const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
     const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
 
     const generateEvent = (): TimelineEvent => {

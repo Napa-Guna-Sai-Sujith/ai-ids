@@ -97,7 +97,7 @@ export default function DataSources() {
   useEffect(() => {
     if (activeFileNames.length === 0) return;
 
-    const attackTypes = ['DDoS', 'DoS', 'Brute Force', 'Bot Attack', 'Port Scan', 'Web Attack'];
+    const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
     const interval = setInterval(() => {
       // Select a random file ONLY from currently enabled switches
       const targetFileName = activeFileNames[Math.floor(Math.random() * activeFileNames.length)];
@@ -476,7 +476,7 @@ export default function DataSources() {
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded text-xs ${
                       usage.attackType === 'DDoS' ? 'bg-red-500/20 text-red-400' :
-                      usage.attackType === 'Brute Force' ? 'bg-orange-500/20 text-orange-400' :
+                      usage.attackType === 'DoS' ? 'bg-orange-500/20 text-orange-400' :
                       'bg-yellow-500/20 text-yellow-400'
                     }`}>
                       {usage.attackType}

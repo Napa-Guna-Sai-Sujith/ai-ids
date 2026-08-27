@@ -37,7 +37,7 @@ export default function ThreatIntel() {
   });
 
   useEffect(() => {
-    const attackTypes = ['DDoS', 'DoS', 'Brute Force', 'Bot Attack', 'Port Scan', 'Web Attack'];
+    const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
     const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
     const statuses: Array<'blocked' | 'pending' | 'investigating'> = ['blocked', 'pending', 'investigating'];
 

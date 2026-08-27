@@ -76,7 +76,7 @@ export interface FlowFeatures {
 }
 
 export interface AttackPrediction {
-  label: 'BENIGN' | 'DDoS' | 'DoS' | 'Brute Force' | 'Bot' | 'Port Scan' | 'Web Attack';
+  label: 'BENIGN' | 'DDoS' | 'DoS' | 'Port Scan' | 'Web Attack';
   confidence: number;
   probabilities: Record<string, number>;
   modelUsed: string;
@@ -153,7 +153,7 @@ class RealTimeDataService {
   };
 
   private attackCounts: Record<string, number> = {
-    BENIGN: 0, DDoS: 0, DoS: 0, 'Brute Force': 0, Bot: 0, 'Port Scan': 0, 'Web Attack': 0
+    BENIGN: 0, DDoS: 0, DoS: 0, 'Port Scan': 0, 'Web Attack': 0
   };
 
   private sourceIPs = [
@@ -183,11 +183,9 @@ class RealTimeDataService {
     const isAttack = attackType !== 'BENIGN';
     const isDDoS = attackType === 'DDoS';
     const isScan = attackType === 'Port Scan';
-    const isBrute = attackType === 'Brute Force';
 
     // DDoS: high packet count, low IAT, many SYN flags
     // Port Scan: many SYN flags, low duration, many connections
-    // Brute Force: repeated connections, many ACK flags
     // DoS: high volume, high packet rate
     // Normal: balanced, varied
 
@@ -249,10 +247,8 @@ class RealTimeDataService {
 
     if (rand < 0.72) label = 'BENIGN';
     else if (rand < 0.80) label = 'DDoS';
-    else if (rand < 0.85) label = 'DoS';
-    else if (rand < 0.90) label = 'Port Scan';
-    else if (rand < 0.94) label = 'Brute Force';
-    else if (rand < 0.97) label = 'Bot';
+    else if (rand < 0.88) label = 'DoS';
+    else if (rand < 0.94) label = 'Port Scan';
     else label = 'Web Attack';
 
     const confidence = label === 'BENIGN'
@@ -260,8 +256,7 @@ class RealTimeDataService {
       : 93 + Math.random() * 6.9;      // 93-99.9% for attacks
 
     const probabilities: Record<string, number> = {
-      BENIGN: 0, DDoS: 0, DoS: 0, 'Brute Force': 0,
-      Bot: 0, 'Port Scan': 0, 'Web Attack': 0,
+      BENIGN: 0, DDoS: 0, DoS: 0, 'Port Scan': 0, 'Web Attack': 0,
     };
 
     probabilities[label] = confidence;

@@ -16,8 +16,6 @@ const getAttackColor = (attackType: AttackTypeName): string => {
   const colors: Record<AttackTypeName, string> = {
     'DDoS': '#ef4444',
     'DoS': '#f97316',
-    'Brute Force': '#eab308',
-    'Bot': '#a855f7',
     'Port Scan': '#06b6d4',
     'Web Attack': '#ec4899',
   };
@@ -31,7 +29,7 @@ export const DetectionHistory: React.FC = () => {
   const [chartData, setChartData] = useState<number[]>(new Array(24).fill(0));
   const [selectedAttack, setSelectedAttack] = useState<DetectionEvent | null>(null);
 
-  const attackTypes: AttackTypeName[] = ['DDoS', 'DoS', 'Brute Force', 'Bot', 'Port Scan', 'Web Attack'];
+  const attackTypes: AttackTypeName[] = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
 
   // Generate random IP
   const generateIP = () => `${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;

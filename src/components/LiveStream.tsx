@@ -7,8 +7,6 @@ const attackColors: Record<string, string> = {
   BENIGN: 'text-green-400 bg-green-500/10 border-green-500/30',
   DDoS: 'text-red-400 bg-red-500/10 border-red-500/30',
   DoS: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
-  'Brute Force': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
-  Bot: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
   'Port Scan': 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
   'Web Attack': 'text-pink-400 bg-pink-500/10 border-pink-500/30',
 };
@@ -44,7 +42,7 @@ export default function LiveStream() {
     return typeMatch && alertMatch;
   });
 
-  const attackOptions = ['All', 'BENIGN', 'DDoS', 'DoS', 'Port Scan', 'Brute Force', 'Bot', 'Web Attack'];
+  const attackOptions = ['All', 'BENIGN', 'DDoS', 'DoS', 'Port Scan', 'Web Attack'];
 
   const formatBytes = (bytes: number): string => {
     if (bytes >= 1e9) return (bytes / 1e9).toFixed(2) + ' GB';

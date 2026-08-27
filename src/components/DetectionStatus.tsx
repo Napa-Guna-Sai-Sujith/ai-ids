@@ -8,7 +8,7 @@ export default function DetectionStatus() {
   const [state, setState] = useState<DetectionState>({
     isNormal: true,
     lastScan: 'STANDBY (No Data Source Active)',
-    threatsBlocked: 1247,
+    threatsBlocked: 0,
     activeConnections: 0,
   });
 
@@ -21,6 +21,7 @@ export default function DetectionStatus() {
         isNormal: true,
         lastScan: 'IDLE (Turn ON a Data Source)',
         activeConnections: 0,
+        threatsBlocked: 0,
       }));
       return;
     }

@@ -16,20 +16,6 @@ const attackData: AttackType[] = [
     severity: 'high',
   },
   {
-    id: 'brute-force',
-    name: 'Brute Force',
-    fullName: 'Brute Force Attack',
-    description: 'Automated trial-and-error method to guess credentials by systematically trying all possible combinations.',
-    severity: 'high',
-  },
-  {
-    id: 'bot',
-    name: 'Bot',
-    fullName: 'Bot Attack',
-    description: 'Malicious automated programs performing fraudulent activities, scraping data, or launching coordinated attacks.',
-    severity: 'medium',
-  },
-  {
     id: 'port-scan',
     name: 'Port Scan',
     fullName: 'Port Scan',
