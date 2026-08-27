@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useDetection } from '../context/DetectionContext';
 
 interface Threat {
   id: string;
@@ -19,6 +20,7 @@ interface GeoData {
 }
 
 export default function ThreatIntel() {
+  const { isDetectionActive } = useDetection();
   const [threats, setThreats] = useState<Threat[]>([]);
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const [geoData] = useState<GeoData[]>([
@@ -37,6 +39,17 @@ export default function ThreatIntel() {
   });
 
   useEffect(() => {
+    if (!isDetectionActive) {
+      setThreats([]);
+      setThreatStats({
+        totalThreats: 0,
+        blocked: 0,
+        pending: 0,
+        investigating: 0,
+      });
+      return;
+    }
+
     const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
     const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
     const statuses: Array<'blocked' | 'pending' | 'investigating'> = ['blocked', 'pending', 'investigating'];
@@ -65,7 +78,7 @@ export default function ThreatIntel() {
     }, 1500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isDetectionActive]);
 
   useEffect(() => {
     setThreatStats({
@@ -129,29 +142,36 @@ export default function ThreatIntel() {
         <div>
           <h4 className="text-gray-300 text-sm font-semibold mb-3">Recent Threats</h4>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {threats.slice(0, 10).map((threat) => (
-              <div
-                key={threat.id}
-                onClick={() => setSelectedThreat(threat)}
-                className={`bg-gray-700/30 rounded-lg p-3 cursor-pointer hover:bg-gray-700/50 transition-all ${
-                  selectedThreat?.id === threat.id ? 'ring-2 ring-blue-500' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${getSeverityColor(threat.severity)}`}>
-                      {threat.severity.toUpperCase()}
-                    </span>
-                    <span className="text-white font-medium">{threat.type}</span>
-                  </div>
-                  <span className={`text-sm ${getStatusColor(threat.status)}`}>{threat.status}</span>
-                </div>
-                <div className="text-gray-400 text-xs">
-                  <p>From: {threat.source}</p>
-                  <p>Time: {threat.timestamp.toLocaleTimeString()}</p>
-                </div>
+            {threats.length === 0 ? (
+              <div className="py-8 px-4 text-center bg-gray-700/20 rounded-xl border border-gray-700/40 text-gray-400">
+                <p className="text-sm font-semibold text-white mb-1">Threat Intelligence Standby</p>
+                <p className="text-xs">Turn ON a dataset switch in the <span className="text-blue-400 font-medium">Data Sources</span> tab to begin threat intelligence gathering.</p>
               </div>
-            ))}
+            ) : (
+              threats.slice(0, 10).map((threat) => (
+                <div
+                  key={threat.id}
+                  onClick={() => setSelectedThreat(threat)}
+                  className={`bg-gray-700/30 rounded-lg p-3 cursor-pointer hover:bg-gray-700/50 transition-all ${
+                    selectedThreat?.id === threat.id ? 'ring-2 ring-blue-500' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${getSeverityColor(threat.severity)}`}>
+                        {threat.severity.toUpperCase()}
+                      </span>
+                      <span className="text-white font-medium">{threat.type}</span>
+                    </div>
+                    <span className={`text-sm ${getStatusColor(threat.status)}`}>{threat.status}</span>
+                  </div>
+                  <div className="text-gray-400 text-xs">
+                    <p>From: {threat.source}</p>
+                    <p>Time: {threat.timestamp.toLocaleTimeString()}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
