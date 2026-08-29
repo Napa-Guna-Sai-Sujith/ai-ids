@@ -16,9 +16,8 @@ interface Threat {
 interface GeoData {
   country: string;
   code: string;
-  count: number;
-  lat: number;
-  lng: number;
+  attacks: number;
+  color: string;
 }
 
 export default function ThreatIntel() {
@@ -26,11 +25,11 @@ export default function ThreatIntel() {
   const [threats, setThreats] = useState<Threat[]>([]);
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const [geoData] = useState<GeoData[]>([
-    { country: 'United States', code: 'US', count: 1245, lat: 37.0902, lng: -95.7129 },
-    { country: 'China', code: 'CN', count: 892, lat: 35.8617, lng: 104.1954 },
-    { country: 'Russia', code: 'RU', count: 654, lat: 61.524, lng: 105.3188 },
-    { country: 'Germany', code: 'DE', count: 432, lat: 51.1657, lng: 10.4515 },
-    { country: 'Brazil', code: 'BR', count: 321, lat: -14.235, lng: -51.9253 },
+    { country: 'United States', code: 'US', attacks: 1245, color: '#3B82F6' },
+    { country: 'China', code: 'CN', attacks: 892, color: '#EF4444' },
+    { country: 'Russia', code: 'RU', attacks: 654, color: '#F97316' },
+    { country: 'Germany', code: 'DE', attacks: 432, color: '#EAB308' },
+    { country: 'Brazil', code: 'BR', attacks: 321, color: '#10B981' },
   ]);
 
   const [threatStats, setThreatStats] = useState({
@@ -262,7 +261,7 @@ export default function ThreatIntel() {
                     style={{ width: `${(geo.attacks / 1500) * 100}%`, backgroundColor: geo.color }}
                   />
                 </div>
-                <span className="text-gray-400 text-sm w-16 text-right">{geo.attacks.toLocaleString()}</span>
+                <span className="text-gray-400 text-xs sm:text-sm w-16 text-right font-mono">{(geo.attacks || 0).toLocaleString()}</span>
               </div>
             </div>
           ))}
