@@ -37,14 +37,28 @@ export const DetectionHistory: React.FC = () => {
     const availableTypes = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
     const attackType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
 
-    let severity: DetectionEvent['severity'] = 'high';
+    const rand = Math.random();
+    let severity: DetectionEvent['severity'] = 'low';
+
     if (attackType === 'DDoS' || attackType === 'Web Attack') {
-      severity = Math.random() > 0.2 ? 'critical' : 'high';
+      if (rand < 0.55) severity = 'critical';
+      else if (rand < 0.85) severity = 'high';
+      else if (rand < 0.95) severity = 'medium';
+      else severity = 'low';
     } else if (attackType === 'DoS') {
-      severity = Math.random() > 0.3 ? 'high' : 'medium';
+      if (rand < 0.40) severity = 'high';
+      else if (rand < 0.75) severity = 'medium';
+      else severity = 'low';
     } else if (attackType === 'Port Scan') {
-      severity = Math.random() > 0.3 ? 'medium' : 'low';
+      if (rand < 0.35) severity = 'high';
+      else if (rand < 0.70) severity = 'medium';
+      else severity = 'low';
     }
+
+    const confidence = severity === 'critical' ? 95 + Math.random() * 4.9 :
+                       severity === 'high' ? 88 + Math.random() * 7 :
+                       severity === 'medium' ? 78 + Math.random() * 9 :
+                       60 + Math.random() * 15;
 
     return {
       id: Math.random().toString(36).substr(2, 9),
@@ -53,7 +67,7 @@ export const DetectionHistory: React.FC = () => {
       severity,
       sourceIP: generateIP(),
       destinationIP: generateIP(),
-      confidence: 75 + Math.random() * 24,
+      confidence,
     };
   };
 
@@ -194,12 +208,34 @@ export const DetectionHistory: React.FC = () => {
         );
       case 'low':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
             LOW
           </span>
         );
     }
+  };
+
+  const getActionStatusBadge = (severity: DetectionEvent['severity']) => {
+    if (severity === 'low') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+          <svg className="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          ALLOWED
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+        <svg className="w-3 h-3 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+        BLOCKED
+      </span>
+    );
   };
 
   return (
@@ -301,12 +337,7 @@ export const DetectionHistory: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-2">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-green-500/20 text-green-400">
-                        <svg className="w-3 h-3 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        BLOCKED
-                      </span>
+                      {getActionStatusBadge(detection.severity)}
                     </td>
                   </tr>
                 ))}
