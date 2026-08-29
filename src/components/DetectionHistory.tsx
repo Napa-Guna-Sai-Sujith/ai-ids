@@ -32,21 +32,18 @@ export const DetectionHistory: React.FC = () => {
   // Generate random IP
   const generateIP = () => `${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
 
-  // Generate random detection event
+  // Generate random detection event matching the active file's attack type & correct severity
   const generateDetection = (): DetectionEvent => {
     const availableTypes = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
     const attackType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-    const severities: DetectionEvent['severity'][] = ['low', 'medium', 'high', 'critical'];
-    const weights = [0.3, 0.35, 0.25, 0.1];
-    const rand = Math.random();
-    let cumulative = 0;
-    let severity: DetectionEvent['severity'] = 'low';
-    for (let i = 0; i < severities.length; i++) {
-      cumulative += weights[i];
-      if (rand < cumulative) {
-        severity = severities[i];
-        break;
-      }
+
+    let severity: DetectionEvent['severity'] = 'high';
+    if (attackType === 'DDoS' || attackType === 'Web Attack') {
+      severity = Math.random() > 0.2 ? 'critical' : 'high';
+    } else if (attackType === 'DoS') {
+      severity = Math.random() > 0.3 ? 'high' : 'medium';
+    } else if (attackType === 'Port Scan') {
+      severity = Math.random() > 0.3 ? 'medium' : 'low';
     }
 
     return {
@@ -172,21 +169,36 @@ export const DetectionHistory: React.FC = () => {
 
   }, [chartData]);
 
-  const getSeverityColor = (severity: DetectionEvent['severity']) => {
+  const getSeverityBadge = (severity: DetectionEvent['severity']) => {
     switch (severity) {
-      case 'critical': return 'bg-red-600';
-      case 'high': return 'bg-orange-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-green-500';
-    }
-  };
-
-  const getSeverityText = (severity: DetectionEvent['severity']) => {
-    switch (severity) {
-      case 'critical': return 'text-red-400';
-      case 'high': return 'text-orange-400';
-      case 'medium': return 'text-yellow-400';
-      case 'low': return 'text-green-400';
+      case 'critical':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping"></span>
+            CRITICAL
+          </span>
+        );
+      case 'high':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+            HIGH
+          </span>
+        );
+      case 'medium':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+            MEDIUM
+          </span>
+        );
+      case 'low':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            LOW
+          </span>
+        );
     }
   };
 
@@ -272,10 +284,7 @@ export const DetectionHistory: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${getSeverityColor(detection.severity)}/20 ${getSeverityText(detection.severity)}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${getSeverityColor(detection.severity)}`}></span>
-                        {detection.severity.toUpperCase()}
-                      </span>
+                      {getSeverityBadge(detection.severity)}
                     </td>
                     <td className="px-4 py-2 text-xs text-slate-400 font-mono">
                       {detection.sourceIP}
