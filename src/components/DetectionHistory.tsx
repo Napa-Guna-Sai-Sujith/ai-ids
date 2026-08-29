@@ -23,20 +23,19 @@ const getAttackColor = (attackType: AttackTypeName): string => {
 };
 
 export const DetectionHistory: React.FC = () => {
-  const { isDetectionActive } = useDetection();
+  const { isDetectionActive, activeAttackTypes } = useDetection();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detections, setDetections] = useState<DetectionEvent[]>([]);
   const [chartData, setChartData] = useState<number[]>(new Array(24).fill(0));
   const [selectedAttack, setSelectedAttack] = useState<DetectionEvent | null>(null);
-
-  const attackTypes: AttackTypeName[] = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
 
   // Generate random IP
   const generateIP = () => `${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
 
   // Generate random detection event
   const generateDetection = (): DetectionEvent => {
-    const attackType = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+    const availableTypes = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
+    const attackType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
     const severities: DetectionEvent['severity'][] = ['low', 'medium', 'high', 'critical'];
     const weights = [0.3, 0.35, 0.25, 0.1];
     const rand = Math.random();

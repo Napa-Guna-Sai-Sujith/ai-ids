@@ -15,20 +15,22 @@ interface Threat {
 
 interface GeoData {
   country: string;
-  attacks: number;
-  color: string;
+  code: string;
+  count: number;
+  lat: number;
+  lng: number;
 }
 
 export default function ThreatIntel() {
-  const { isDetectionActive } = useDetection();
+  const { isDetectionActive, activeAttackTypes } = useDetection();
   const [threats, setThreats] = useState<Threat[]>([]);
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const [geoData] = useState<GeoData[]>([
-    { country: 'China', attacks: 1240, color: '#EF4444' },
-    { country: 'Russia', attacks: 890, color: '#F97316' },
-    { country: 'USA', attacks: 560, color: '#EAB308' },
-    { country: 'Brazil', attacks: 420, color: '#22C55E' },
-    { country: 'India', attacks: 380, color: '#3B82F6' },
+    { country: 'United States', code: 'US', count: 1245, lat: 37.0902, lng: -95.7129 },
+    { country: 'China', code: 'CN', count: 892, lat: 35.8617, lng: 104.1954 },
+    { country: 'Russia', code: 'RU', count: 654, lat: 61.524, lng: 105.3188 },
+    { country: 'Germany', code: 'DE', count: 432, lat: 51.1657, lng: 10.4515 },
+    { country: 'Brazil', code: 'BR', count: 321, lat: -14.235, lng: -51.9253 },
   ]);
 
   const [threatStats, setThreatStats] = useState({
@@ -50,21 +52,24 @@ export default function ThreatIntel() {
       return;
     }
 
-    const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
+    const availableTypes = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
     const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
     const statuses: Array<'blocked' | 'pending' | 'investigating'> = ['blocked', 'pending', 'investigating'];
 
-    const generateThreat = (): Threat => ({
-      id: Math.random().toString(36).substr(2, 9),
-      type: attackTypes[Math.floor(Math.random() * attackTypes.length)],
-      severity: severities[Math.floor(Math.random() * severities.length)],
-      source: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-      destination: `192.168.1.${Math.floor(Math.random() * 255)}`,
-      timestamp: new Date(),
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      confidence: Math.floor(Math.random() * 25) + 75,
-      description: `Detected ${attackTypes[Math.floor(Math.random() * attackTypes.length)]} pattern from external source`,
-    });
+    const generateThreat = (): Threat => {
+      const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        type,
+        severity: severities[Math.floor(Math.random() * severities.length)],
+        source: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+        destination: `192.168.1.${Math.floor(Math.random() * 255)}`,
+        timestamp: new Date(),
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        confidence: Math.floor(Math.random() * 25) + 75,
+        description: `Detected ${type} pattern from external source`,
+      };
+    };
 
     // Initial threats
     const initialThreats = Array.from({ length: 10 }, generateThreat);

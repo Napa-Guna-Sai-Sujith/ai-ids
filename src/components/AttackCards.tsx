@@ -4,7 +4,7 @@ import AttackCard from './AttackCard';
 import { useDetection } from '../context/DetectionContext';
 
 export default function AttackCards() {
-  const { isDetectionActive } = useDetection();
+  const { isDetectionActive, activeAttackTypes } = useDetection();
   const [detectedAttacks, setDetectedAttacks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -14,17 +14,17 @@ export default function AttackCards() {
     }
 
     const interval = setInterval(() => {
-      // Randomly toggle some attacks as detected
-      const numDetected = Math.floor(Math.random() * 3) + 1;
+      // Light up ONLY the attacks corresponding to active files
+      const matchingAttacks = attackData.filter(attack =>
+        activeAttackTypes.includes(attack.name)
+      );
+
       const newDetected = new Set<string>();
-      const shuffled = [...attackData].sort(() => Math.random() - 0.5);
-      for (let i = 0; i < numDetected; i++) {
-        newDetected.add(shuffled[i].id);
-      }
+      matchingAttacks.forEach(attack => newDetected.add(attack.id));
       setDetectedAttacks(newDetected);
-    }, 5000);
+    }, 2000);
     return () => clearInterval(interval);
-  }, [isDetectionActive]);
+  }, [isDetectionActive, activeAttackTypes]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">

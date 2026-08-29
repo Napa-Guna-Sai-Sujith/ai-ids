@@ -12,7 +12,7 @@ interface TimelineEvent {
 }
 
 export default function AttackTimeline() {
-  const { isDetectionActive } = useDetection();
+  const { isDetectionActive, activeAttackTypes } = useDetection();
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [filter, setFilter] = useState<'all' | 'attack' | 'block' | 'alert' | 'scan'>('all');
 
@@ -23,7 +23,7 @@ export default function AttackTimeline() {
     }
 
     const eventTypes: Array<TimelineEvent['eventType']> = ['attack', 'block', 'alert', 'scan'];
-    const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
+    const availableTypes = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
     const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
 
     const generateEvent = (): TimelineEvent => {
@@ -32,7 +32,7 @@ export default function AttackTimeline() {
         id: Math.random().toString(36).substr(2, 9),
         timestamp: new Date(),
         eventType,
-        attackType: eventType === 'attack' ? attackTypes[Math.floor(Math.random() * attackTypes.length)] : undefined,
+        attackType: eventType === 'attack' ? availableTypes[Math.floor(Math.random() * availableTypes.length)] : undefined,
         severity: eventType === 'attack' ? severities[Math.floor(Math.random() * severities.length)] : undefined,
         source: eventType === 'attack' || eventType === 'block' ? `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}` : undefined,
         description: getEventDescription(eventType),
