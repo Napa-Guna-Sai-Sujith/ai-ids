@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, UploadCloud, CheckCircle2, AlertCircle, RefreshCw, Archive } from 'lucide-react';
+import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, UploadCloud, CheckCircle2, AlertCircle, RefreshCw, Archive, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDetection } from '../context/DetectionContext';
 import { fetchUserDatasetsFromNeon, saveDatasetToNeonDirect } from '../services/neonDb';
@@ -92,6 +92,13 @@ export default function DataSources() {
       })
       .catch(err => console.warn('Could not fetch DB datasets:', err));
   }, [user?.email]);
+
+  const handleRemoveFile = (fileName: string) => {
+    if (activeSwitches[fileName]) {
+      toggleFileDetection(fileName);
+    }
+    setDatasetFiles(prev => prev.filter(file => file.name !== fileName));
+  };
 
   // Generate detections ONLY from files that have their switch turned ON
   useEffect(() => {
@@ -430,6 +437,7 @@ export default function DataSources() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Accuracy</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Last Updated</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700/50">
@@ -503,6 +511,17 @@ export default function DataSources() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-sm">{file.lastUpdated}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(file.name)}
+                        title={`Remove ${file.name}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
