@@ -97,18 +97,32 @@ export default function DataSources() {
   useEffect(() => {
     if (activeFileNames.length === 0) return;
 
-    const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
     const interval = setInterval(() => {
       // Select a random file ONLY from currently enabled switches
       const targetFileName = activeFileNames[Math.floor(Math.random() * activeFileNames.length)];
-      
+      const lowerName = targetFileName.toLowerCase();
+
+      let detectedType = 'DDoS';
+      if (lowerName.includes('ddos')) {
+        detectedType = 'DDoS';
+      } else if (lowerName.includes('dos')) {
+        detectedType = 'DoS';
+      } else if (lowerName.includes('port')) {
+        detectedType = 'Port Scan';
+      } else if (lowerName.includes('web')) {
+        detectedType = 'Web Attack';
+      } else {
+        const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
+        detectedType = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+      }
+
       const newUsage: ActiveUsage = {
         detectionId: `DET-${Date.now().toString().slice(-6)}`,
         dataSource: targetFileName,
         recordsAnalyzed: Math.floor(Math.random() * 5000) + 100,
         status: Math.random() > 0.3 ? 'Analyzed' : 'Processing',
         timestamp: new Date().toLocaleTimeString(),
-        attackType: attackTypes[Math.floor(Math.random() * attackTypes.length)],
+        attackType: detectedType,
         confidence: Math.floor(Math.random() * 10) + 90,
       };
 
@@ -310,6 +324,52 @@ export default function DataSources() {
             <span>{uploadError}</span>
           </div>
         )}
+
+        {/* Sample Datasets for Testing */}
+        <div className="mt-6 pt-5 border-t border-slate-700/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div>
+              <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                <span>🧪</span> Sample Test CSV Datasets
+              </h4>
+              <p className="text-xs text-slate-400">Download single-attack test datasets to test detection upload capabilities for each of the 4 supported attack types:</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <a
+              href="/sample_datasets/ddos_attack_dataset.csv"
+              download="ddos_attack_dataset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-300 text-xs font-semibold transition-all group"
+            >
+              <span>💥 DDoS CSV</span>
+              <span className="text-[10px] bg-red-500/30 px-1.5 py-0.5 rounded text-red-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
+            <a
+              href="/sample_datasets/dos_attack_dataset.csv"
+              download="dos_attack_dataset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 text-orange-300 text-xs font-semibold transition-all group"
+            >
+              <span>🔥 DoS CSV</span>
+              <span className="text-[10px] bg-orange-500/30 px-1.5 py-0.5 rounded text-orange-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
+            <a
+              href="/sample_datasets/port_scan_dataset.csv"
+              download="port_scan_dataset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold transition-all group"
+            >
+              <span>🔍 Port Scan CSV</span>
+              <span className="text-[10px] bg-cyan-500/30 px-1.5 py-0.5 rounded text-cyan-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
+            <a
+              href="/sample_datasets/web_attack_dataset.csv"
+              download="web_attack_dataset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-pink-500/10 border border-pink-500/30 hover:bg-pink-500/20 text-pink-300 text-xs font-semibold transition-all group"
+            >
+              <span>🌐 Web Attack CSV</span>
+              <span className="text-[10px] bg-pink-500/30 px-1.5 py-0.5 rounded text-pink-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

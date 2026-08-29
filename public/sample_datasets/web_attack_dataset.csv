@@ -1,0 +1,6 @@
+timestamp,source_ip,destination_ip,protocol,attack_type,confidence,status,http_method,uri_payload
+2026-08-29 10:45:01,185.220.101.5,192.168.1.50,HTTP,Web Attack,99.2%,BLOCKED,GET,/api/user?id=1' UNION SELECT 1,username,password FROM users--
+2026-08-29 10:45:12,185.220.101.5,192.168.1.50,HTTP,Web Attack,98.6%,BLOCKED,POST,/login?user=<script>alert('XSS')</script>
+2026-08-29 10:45:25,91.121.87.12,192.168.1.50,HTTP,Web Attack,99.7%,BLOCKED,GET,/etc/passwd
+2026-08-29 10:45:38,91.121.87.12,192.168.1.50,HTTP,Web Attack,98.9%,BLOCKED,GET,/wp-admin/admin-ajax.php?action=eval
+2026-08-29 10:45:49,45.33.32.88,192.168.1.50,HTTP,Web Attack,99.5%,BLOCKED,POST,/upload?file=shell.php
