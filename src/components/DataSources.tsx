@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, UploadCloud, CheckCircle2, AlertCircle, RefreshCw, Archive, Trash2 } from 'lucide-react';
+import { Database, Activity, ShieldCheck, Clock, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, UploadCloud, CheckCircle2, AlertCircle, RefreshCw, Archive, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDetection } from '../context/DetectionContext';
 import { fetchUserDatasetsFromNeon, saveDatasetToNeonDirect } from '../services/neonDb';
+import DatasetViewerModal from './DatasetViewerModal';
 
 interface DatasetFile {
   name: string;
@@ -69,6 +70,7 @@ export default function DataSources() {
 
   const [activeUsage, setActiveUsage] = useState<ActiveUsage[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<DatasetFile | null>(null);
 
   // File Upload & AI Training States
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -472,9 +474,14 @@ export default function DataSources() {
                     className={`hover:bg-gray-700/30 transition-colors ${isSwitchedOn ? 'bg-blue-500/10' : ''}`}
                   >
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <div 
+                        onClick={() => setPreviewFile(file)}
+                        className="flex items-center gap-2 cursor-pointer group hover:text-blue-400 transition-colors"
+                      >
                         {getFormatIcon(file.format)}
-                        <span className="text-white font-medium">{file.name}</span>
+                        <span className="text-white font-medium group-hover:text-blue-400 underline-offset-4 group-hover:underline">
+                          {file.name}
+                        </span>
                       </div>
                     </td>
                     {/* Interactive Detection Switch Button */}
@@ -535,15 +542,26 @@ export default function DataSources() {
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-sm">{file.lastUpdated}</td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFile(file.name)}
-                        title={`Remove ${file.name}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Remove</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewFile(file)}
+                          title={`View data inside ${file.name}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 transition-all cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Data</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(file.name)}
+                          title={`Remove ${file.name}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -613,6 +631,9 @@ export default function DataSources() {
           </table>
         </div>
       </div>
+
+      {/* Dataset Content Preview Modal */}
+      <DatasetViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
 }
