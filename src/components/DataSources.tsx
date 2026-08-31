@@ -50,14 +50,22 @@ export default function DataSources() {
   const { user } = useAuth();
   const { activeSwitches, activeFileNames, toggleFileDetection } = useDetection();
 
-  const [datasetFiles, setDatasetFiles] = useState<DatasetFile[]>([
-    { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
-    { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
-    { name: 'packet_capture_2024.pcap', records: 890000, size: '2.1 GB', format: 'PCAP', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 845000, detectionCount: 3421, accuracy: 98.9 },
-    { name: 'malware_indicators.xml', records: 15000, size: '850 KB', format: 'XML', status: 'Active', lastUpdated: '10 min ago', recordsAnalyzed: 15000, detectionCount: 567, accuracy: 99.5 },
-    { name: 'user_behavior_log.csv', records: 450000, size: '128 MB', format: 'CSV', status: 'Active', lastUpdated: '1 min ago', recordsAnalyzed: 448000, detectionCount: 2103, accuracy: 99.1 },
-    { name: 'firewall_events.log', records: 2100000, size: '560 MB', format: 'LOG', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 2050000, detectionCount: 4521, accuracy: 99.4 },
-  ]);
+  const [datasetFiles, setDatasetFiles] = useState<DatasetFile[]>(() => {
+    const defaultFiles: DatasetFile[] = [
+      { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
+      { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
+      { name: 'packet_capture_2024.pcap', records: 890000, size: '2.1 GB', format: 'PCAP', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 845000, detectionCount: 3421, accuracy: 98.9 },
+      { name: 'malware_indicators.xml', records: 15000, size: '850 KB', format: 'XML', status: 'Active', lastUpdated: '10 min ago', recordsAnalyzed: 15000, detectionCount: 567, accuracy: 99.5 },
+      { name: 'user_behavior_log.csv', records: 450000, size: '128 MB', format: 'CSV', status: 'Active', lastUpdated: '1 min ago', recordsAnalyzed: 448000, detectionCount: 2103, accuracy: 99.1 },
+      { name: 'firewall_events.log', records: 2100000, size: '560 MB', format: 'LOG', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 2050000, detectionCount: 4521, accuracy: 99.4 },
+    ];
+    try {
+      const removed = JSON.parse(localStorage.getItem('removed_dataset_files') || '[]');
+      return defaultFiles.filter(f => !removed.includes(f.name));
+    } catch {
+      return defaultFiles;
+    }
+  });
 
   const [activeUsage, setActiveUsage] = useState<ActiveUsage[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -76,18 +84,25 @@ export default function DataSources() {
     fetchUserDatasetsFromNeon(user.email)
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          const dbDatasets: DatasetFile[] = data.map((d: any) => ({
-            name: d.file_name,
-            records: d.records || 10000,
-            size: d.file_size,
-            format: (d.format || 'CSV') as DatasetFile['format'],
-            status: d.status || 'Active',
-            lastUpdated: d.created_at ? new Date(d.created_at).toLocaleDateString() : 'Recent',
-            recordsAnalyzed: d.records || 10000,
-            detectionCount: Math.floor(Math.random() * 500) + 50,
-            accuracy: 99.5,
-          }));
-          setDatasetFiles(prev => [...dbDatasets, ...prev]);
+          const removed = JSON.parse(localStorage.getItem('removed_dataset_files') || '[]');
+          const dbDatasets: DatasetFile[] = data
+            .filter((d: any) => !removed.includes(d.file_name))
+            .map((d: any) => ({
+              name: d.file_name,
+              records: d.records || 10000,
+              size: d.file_size,
+              format: (d.format || 'CSV') as DatasetFile['format'],
+              status: d.status || 'Active',
+              lastUpdated: d.created_at ? new Date(d.created_at).toLocaleDateString() : 'Recent',
+              recordsAnalyzed: d.records || 10000,
+              detectionCount: Math.floor(Math.random() * 500) + 50,
+              accuracy: 99.5,
+            }));
+          setDatasetFiles(prev => {
+            const existingNames = new Set(prev.map(f => f.name));
+            const newFiles = dbDatasets.filter(f => !existingNames.has(f.name));
+            return [...prev, ...newFiles];
+          });
         }
       })
       .catch(err => console.warn('Could not fetch DB datasets:', err));
@@ -98,6 +113,14 @@ export default function DataSources() {
       toggleFileDetection(fileName);
     }
     setDatasetFiles(prev => prev.filter(file => file.name !== fileName));
+    try {
+      const removed = JSON.parse(localStorage.getItem('removed_dataset_files') || '[]');
+      if (!removed.includes(fileName)) {
+        localStorage.setItem('removed_dataset_files', JSON.stringify([...removed, fileName]));
+      }
+    } catch (err) {
+      console.warn('Could not save removed file to localStorage', err);
+    }
   };
 
   // Generate detections ONLY from files that have their switch turned ON
