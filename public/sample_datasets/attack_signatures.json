@@ -1,0 +1,20 @@
+[
+  {
+    "signature_id": "SIG-1001",
+    "name": "DDoS Flood Signature",
+    "severity": "CRITICAL",
+    "pattern": "SYN_FLOOD_THRESHOLD_EXCEEDED"
+  },
+  {
+    "signature_id": "SIG-1002",
+    "name": "SQL Injection Pattern",
+    "severity": "CRITICAL",
+    "pattern": "UNION_SELECT_PAYLOAD"
+  },
+  {
+    "signature_id": "SIG-1003",
+    "name": "Port Sweep Detector",
+    "severity": "MEDIUM",
+    "pattern": "SYN_SCAN_MULTI_PORT"
+  }
+]
