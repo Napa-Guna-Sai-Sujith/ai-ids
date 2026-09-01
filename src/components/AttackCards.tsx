@@ -4,41 +4,22 @@ import AttackCard from './AttackCard';
 import { useDetection } from '../context/DetectionContext';
 
 export default function AttackCards() {
-  const { isDetectionActive, activeAttackTypes } = useDetection();
+  const { isDetectionActive, activeAttackTypes, latestDetectedAttack } = useDetection();
   const [detectedAttacks, setDetectedAttacks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!isDetectionActive) {
+    if (!isDetectionActive || !latestDetectedAttack) {
       setDetectedAttacks(new Set());
       return;
     }
 
-    const interval = setInterval(() => {
-      // Filter attack cards matching active dataset attack types
-      const matchingAttacks = attackData.filter(attack =>
-        activeAttackTypes.includes(attack.name)
-      );
-
-      if (matchingAttacks.length === 0) {
-        setDetectedAttacks(new Set());
-        return;
-      }
-
-      // If single attack dataset is active (e.g. DDoS CSV), light up that attack
-      // If multi-attack dataset is active, dynamically detect 1 or 2 attacks per tick
-      const countToDetect = Math.min(matchingAttacks.length, Math.floor(Math.random() * 2) + 1);
-      const shuffled = [...matchingAttacks].sort(() => Math.random() - 0.5);
-      const newDetected = new Set<string>();
-
-      for (let i = 0; i < countToDetect; i++) {
-        newDetected.add(shuffled[i].id);
-      }
-
-      setDetectedAttacks(newDetected);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [isDetectionActive, activeAttackTypes]);
+    const matchingAttack = attackData.find(attack => attack.name === latestDetectedAttack);
+    if (matchingAttack && activeAttackTypes.includes(matchingAttack.name)) {
+      setDetectedAttacks(new Set([matchingAttack.id]));
+    } else {
+      setDetectedAttacks(new Set());
+    }
+  }, [isDetectionActive, latestDetectedAttack, activeAttackTypes]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">

@@ -23,7 +23,7 @@ const getAttackColor = (attackType: AttackTypeName): string => {
 };
 
 export const DetectionHistory: React.FC = () => {
-  const { isDetectionActive, activeAttackTypes } = useDetection();
+  const { isDetectionActive, activeAttackTypes, setLatestDetectedAttack } = useDetection();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detections, setDetections] = useState<DetectionEvent[]>([]);
   const [chartData, setChartData] = useState<number[]>(new Array(24).fill(0));
@@ -74,6 +74,7 @@ export const DetectionHistory: React.FC = () => {
   // Simulate incoming detections ONLY when isDetectionActive is true
   useEffect(() => {
     if (!isDetectionActive) {
+      setLatestDetectedAttack(null);
       return;
     }
 
@@ -81,6 +82,7 @@ export const DetectionHistory: React.FC = () => {
       if (Math.random() > 0.4) {
         const newDetection = generateDetection();
         setDetections(prev => [newDetection, ...prev].slice(0, 50));
+        setLatestDetectedAttack(newDetection.attackType);
         
         // Update chart data
         setChartData(prev => {
@@ -92,7 +94,7 @@ export const DetectionHistory: React.FC = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [isDetectionActive]);
+  }, [isDetectionActive, activeAttackTypes]);
 
   // Draw chart
   useEffect(() => {

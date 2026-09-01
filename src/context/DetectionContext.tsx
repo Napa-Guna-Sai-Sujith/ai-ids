@@ -6,6 +6,8 @@ interface DetectionContextType {
   activeFileNames: string[];
   isDetectionActive: boolean;
   activeAttackTypes: AttackTypeName[];
+  latestDetectedAttack: AttackTypeName | null;
+  setLatestDetectedAttack: (attack: AttackTypeName | null) => void;
   toggleFileDetection: (fileName: string) => void;
 }
 
@@ -22,6 +24,7 @@ export const getAttackTypesForFile = (fileName: string): AttackTypeName[] => {
 
 export const DetectionProvider = ({ children }: { children: ReactNode }) => {
   const [activeSwitches, setActiveSwitches] = useState<{ [fileName: string]: boolean }>({});
+  const [latestDetectedAttack, setLatestDetectedAttack] = useState<AttackTypeName | null>(null);
 
   const toggleFileDetection = (fileName: string) => {
     setActiveSwitches((prev) => {
@@ -47,6 +50,8 @@ export const DetectionProvider = ({ children }: { children: ReactNode }) => {
         activeFileNames,
         isDetectionActive,
         activeAttackTypes,
+        latestDetectedAttack: isDetectionActive ? latestDetectedAttack : null,
+        setLatestDetectedAttack,
         toggleFileDetection,
       }}
     >
