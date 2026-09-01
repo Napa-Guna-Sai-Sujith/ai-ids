@@ -14,15 +14,29 @@ export default function AttackCards() {
     }
 
     const interval = setInterval(() => {
-      // Light up ONLY the attacks corresponding to active files
+      // Filter attack cards matching active dataset attack types
       const matchingAttacks = attackData.filter(attack =>
         activeAttackTypes.includes(attack.name)
       );
 
+      if (matchingAttacks.length === 0) {
+        setDetectedAttacks(new Set());
+        return;
+      }
+
+      // If single attack dataset is active (e.g. DDoS CSV), light up that attack
+      // If multi-attack dataset is active, dynamically detect 1 or 2 attacks per tick
+      const countToDetect = Math.min(matchingAttacks.length, Math.floor(Math.random() * 2) + 1);
+      const shuffled = [...matchingAttacks].sort(() => Math.random() - 0.5);
       const newDetected = new Set<string>();
-      matchingAttacks.forEach(attack => newDetected.add(attack.id));
+
+      for (let i = 0; i < countToDetect; i++) {
+        newDetected.add(shuffled[i].id);
+      }
+
       setDetectedAttacks(newDetected);
-    }, 2000);
+    }, 3000);
+
     return () => clearInterval(interval);
   }, [isDetectionActive, activeAttackTypes]);
 
