@@ -172,68 +172,51 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
 
       {/* Main Content */}
       <main className="relative max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8">
-        {activeTab === 'overview' && (
-          <div className="space-y-6 animate-fadeIn">
-            <FlowDiagram />
-            <DetectionStatus />
-            <TrafficVisualizer />
-            <AttackCards />
-            <DetectionHistory />
-          </div>
-        )}
+        {/* Tab Content Views — kept mounted in background so live state/logs are preserved */}
+        <div className={activeTab === 'overview' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <DetectionStatus />
+          <FlowDiagram />
+          <TrafficVisualizer />
+          <AttackCards />
+          <DetectionHistory />
+        </div>
 
-        {activeTab === 'network' && (
-          <div className="space-y-6 animate-fadeIn">
-            <NetworkStats />
-            <DetectionHistory />
-          </div>
-        )}
+        <div className={activeTab === 'network' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <NetworkStats />
+          <DetectionHistory />
+        </div>
 
-        {activeTab === 'model' && (
-          <div className="space-y-6 animate-fadeIn">
-            <ModelPerformance />
-            <DetectionHistory />
-          </div>
-        )}
+        <div className={activeTab === 'model' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <ModelPerformance />
+          <DetectionHistory />
+        </div>
 
-        {activeTab === 'threats' && (
-          <div className="space-y-6 animate-fadeIn">
-            <ThreatIntel />
-            <AttackCards />
-          </div>
-        )}
+        <div className={activeTab === 'threats' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <ThreatIntel />
+          <AttackCards />
+        </div>
 
-        {activeTab === 'health' && (
-          <div className="space-y-6 animate-fadeIn">
-            <SystemHealth />
-            <ModelPerformance />
-          </div>
-        )}
+        <div className={activeTab === 'health' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <SystemHealth />
+          <ModelPerformance />
+        </div>
 
-        {activeTab === 'timeline' && (
-          <div className="space-y-6 animate-fadeIn">
-            <AttackTimeline />
-            <DetectionHistory />
-          </div>
-        )}
+        <div className={activeTab === 'timeline' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <AttackTimeline />
+          <DetectionHistory />
+        </div>
 
-        {activeTab === 'datasources' && (
-          <div className="space-y-6 animate-fadeIn">
-            <DataSources />
-          </div>
-        )}
+        <div className={activeTab === 'datasources' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <DataSources />
+        </div>
 
-        {activeTab === 'livestream' && (
-          <div className="space-y-6 animate-fadeIn">
-            <LiveStream />
-          </div>
-        )}
+        <div className={activeTab === 'livestream' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <LiveStream />
+        </div>
 
-        {activeTab === 'features' && (
-          <div className="space-y-6 animate-fadeIn">
-            <MLFeatures />
-          </div>
-        )}
+        <div className={activeTab === 'features' ? 'space-y-6 animate-fadeIn' : 'hidden'}>
+          <MLFeatures />
+        </div>
       </main>
 
       {/* Footer */}
