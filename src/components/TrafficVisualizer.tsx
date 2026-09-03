@@ -104,20 +104,34 @@ export default function TrafficVisualizer() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const handleResize = () => {
-      const dpr2 = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr2;
-      canvas.height = canvas.offsetHeight * dpr2;
-      ctx.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+    const updateDimensions = () => {
+      const parent = canvas.parentElement;
+      const width = canvas.offsetWidth || (parent ? parent.clientWidth : 800);
+      const height = canvas.offsetHeight || 250;
+      if (width > 0 && height > 0) {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
     };
-    handleResize();
 
-    window.addEventListener('resize', handleResize);
+    updateDimensions();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions();
+    });
+
+    if (canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
+    }
+    window.addEventListener('resize', updateDimensions);
     animate(canvas, ctx);
 
     return () => {
       cancelAnimationFrame(animRef.current);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', updateDimensions);
+      resizeObserver.disconnect();
     };
   }, [animate]);
 
