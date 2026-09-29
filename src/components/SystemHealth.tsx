@@ -26,68 +26,12 @@ export default function SystemHealth() {
   const [uptime, setUptime] = useState(0);
   const [lastCheck, setLastCheck] = useState(new Date());
 
-  const logsEndRef = useRef<HTMLDivElement>(null);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Calculate uptime
-    const startTime = Date.now() - 86400000 * 3 + Math.random() * 43200000; // 2-4 days ago
-    setUptime(Math.floor((Date.now() - startTime) / 1000));
-
-    const interval = setInterval(() => {
-      setUptime(prev => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const messages = [
-      { level: 'info' as const, message: 'System health check completed', component: 'Monitor' },
-      { level: 'success' as const, message: 'All services operational', component: 'Health' },
-      { level: 'info' as const, message: 'Database connection pool optimized', component: 'Database' },
-      { level: 'warning' as const, message: 'High memory usage detected temporarily', component: 'Memory' },
-      { level: 'info' as const, message: 'Cache cleared successfully', component: 'Cache' },
-      { level: 'success' as const, message: 'Backup completed', component: 'Backup' },
-      { level: 'info' as const, message: 'Security scan initiated', component: 'Security' },
-      { level: 'info' as const, message: 'Log rotation completed', component: 'Logger' },
-    ];
-
-    const generateLog = (): LogEntry => ({
-      timestamp: new Date(),
-      level: messages[Math.floor(Math.random() * messages.length)].level,
-      message: messages[Math.floor(Math.random() * messages.length)].message,
-      component: messages[Math.floor(Math.random() * messages.length)].component,
-    });
-
-    // Initial logs
-    const initialLogs = Array.from({ length: 15 }, generateLog);
-    setLogs(initialLogs);
-
-    const interval = setInterval(() => {
-      if (Math.random() > 0.3) {
-        setLogs(prev => [...prev.slice(-49), generateLog()]);
-        setLastCheck(new Date());
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    // Update metrics randomly
-    const interval = setInterval(() => {
-      setMetrics(prev => prev.map(metric => ({
-        ...metric,
-        value: Math.min(100, Math.max(0, metric.value + (Math.random() * 10 - 5))),
-        status: metric.value > 85 ? 'critical' : metric.value > 70 ? 'warning' : 'healthy'
-      })));
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+    }
   }, [logs]);
 
   const formatUptime = (seconds: number): string => {
@@ -213,7 +157,7 @@ export default function SystemHealth() {
           <h4 className="text-gray-300 text-sm font-semibold">System Logs</h4>
           <span className="text-gray-500 text-xs">{logs.length} entries</span>
         </div>
-        <div className="bg-gray-900/50 rounded-lg p-4 max-h-64 overflow-y-auto font-mono text-sm">
+        <div ref={logsContainerRef} className="bg-gray-900/50 rounded-lg p-4 max-h-64 overflow-y-auto font-mono text-sm">
           {logs.map((log, index) => (
             <div key={index} className="flex items-start gap-3 py-1 border-b border-gray-800 last:border-0">
               <span className="text-gray-500 text-xs whitespace-nowrap">
@@ -226,7 +170,6 @@ export default function SystemHealth() {
               <span className="text-gray-500 text-xs">{log.component}</span>
             </div>
           ))}
-          <div ref={logsEndRef} />
         </div>
       </div>
 
