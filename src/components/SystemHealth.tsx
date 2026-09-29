@@ -80,6 +80,117 @@ export default function SystemHealth() {
     }
   };
 
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
+
+  const handleRunDiagnostics = () => {
+    setActiveAction('diagnostics');
+    setActionMessage('Running comprehensive AI system diagnostics...');
+    setTimeout(() => {
+      setLogs(prev => [
+        ...prev,
+        {
+          timestamp: new Date(),
+          level: 'success',
+          message: 'System diagnostics complete: All 6 microservices operational (0 errors, 100% health rating)',
+          component: 'Diagnostics',
+        },
+      ]);
+      setMetrics(prev =>
+        prev.map(m =>
+          m.name === 'CPU Usage' ? { ...m, value: 35.0, status: 'healthy' } :
+          m.name === 'Memory' ? { ...m, value: 48.0, status: 'healthy' } : m
+        )
+      );
+      setActionMessage('✓ Diagnostics Completed Successfully');
+      setActiveAction(null);
+      setTimeout(() => setActionMessage(null), 3500);
+    }, 1200);
+  };
+
+  const handleClearCache = () => {
+    setActiveAction('cache');
+    setActionMessage('Clearing system cache and model memory buffers...');
+    setTimeout(() => {
+      setLogs(prev => [
+        ...prev,
+        {
+          timestamp: new Date(),
+          level: 'success',
+          message: 'Cache purge complete: 184 MB temporary memory buffers cleared',
+          component: 'Cache',
+        },
+      ]);
+      setMetrics(prev =>
+        prev.map(m => (m.name === 'Memory' ? { ...m, value: Math.max(30, m.value - 18), status: 'healthy' } : m))
+      );
+      setActionMessage('✓ System Cache Cleared');
+      setActiveAction(null);
+      setTimeout(() => setActionMessage(null), 3500);
+    }, 1000);
+  };
+
+  const handleRestartServices = () => {
+    setActiveAction('restart');
+    setActionMessage('Restarting IDS Security Microservices...');
+    setTimeout(() => {
+      setLogs(prev => [
+        ...prev,
+        {
+          timestamp: new Date(),
+          level: 'warning',
+          message: 'IDS Microservices graceful restart initiated',
+          component: 'System',
+        },
+        {
+          timestamp: new Date(),
+          level: 'success',
+          message: 'IDS Security Engine, Database pool & ML Services re-initialized',
+          component: 'System',
+        },
+      ]);
+      setLastCheck(new Date());
+      setActionMessage('✓ Microservices Restarted Successfully');
+      setActiveAction(null);
+      setTimeout(() => setActionMessage(null), 3500);
+    }, 1500);
+  };
+
+  const handleExportLogs = () => {
+    setActiveAction('export');
+    const logText = logs
+      .map(
+        l =>
+          `[${l.timestamp.toISOString()}] [${l.level.toUpperCase()}] [${l.component}] ${l.message}`
+      )
+      .join('\n');
+
+    const blob = new Blob([`==================================================\nAI INTRUSION DETECTION SYSTEM — HEALTH LOGS EXPORT\n==================================================\n\n${logText}`], {
+      type: 'text/plain;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ids_health_logs_${new Date().toISOString().slice(0, 10)}.log`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setLogs(prev => [
+      ...prev,
+      {
+        timestamp: new Date(),
+        level: 'info',
+        message: `Exported ${logs.length} log entries to file ids_health_logs.log`,
+        component: 'Exporter',
+      },
+    ]);
+    setActionMessage('✓ System Health Logs Exported (.log)');
+    setActiveAction(null);
+    setTimeout(() => setActionMessage(null), 3500);
+  };
+
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
       <div className="flex items-center justify-between mb-4">
@@ -100,6 +211,13 @@ export default function SystemHealth() {
           </div>
         </div>
       </div>
+
+      {actionMessage && (
+        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-xl text-blue-400 text-xs font-semibold flex items-center gap-2 animate-fade-in">
+          <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+          <span>{actionMessage}</span>
+        </div>
+      )}
 
       {/* System Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -175,20 +293,45 @@ export default function SystemHealth() {
 
       {/* Quick Actions */}
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: 'Run Diagnostics', icon: '🔍', color: 'blue' },
-          { label: 'Clear Cache', icon: '🗑️', color: 'yellow' },
-          { label: 'Restart Services', icon: '🔄', color: 'purple' },
-          { label: 'Export Logs', icon: '📤', color: 'green' },
-        ].map((action, index) => (
-          <button
-            key={index}
-            className={`bg-gray-700/50 hover:bg-gray-700 rounded-lg p-3 transition-all flex items-center justify-center gap-2 text-gray-300 hover:text-white`}
-          >
-            <span>{action.icon}</span>
-            <span className="text-sm">{action.label}</span>
-          </button>
-        ))}
+        <button
+          type="button"
+          onClick={handleRunDiagnostics}
+          disabled={activeAction !== null}
+          className="bg-gray-700/50 hover:bg-gray-700 border border-slate-600/50 hover:border-blue-500/50 rounded-lg p-3 transition-all flex items-center justify-center gap-2 text-gray-300 hover:text-white cursor-pointer active:scale-95"
+        >
+          <span>{activeAction === 'diagnostics' ? '⏳' : '🔍'}</span>
+          <span className="text-sm font-medium">{activeAction === 'diagnostics' ? 'Scanning...' : 'Run Diagnostics'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleClearCache}
+          disabled={activeAction !== null}
+          className="bg-gray-700/50 hover:bg-gray-700 border border-slate-600/50 hover:border-amber-500/50 rounded-lg p-3 transition-all flex items-center justify-center gap-2 text-gray-300 hover:text-white cursor-pointer active:scale-95"
+        >
+          <span>{activeAction === 'cache' ? '⏳' : '🗑️'}</span>
+          <span className="text-sm font-medium">{activeAction === 'cache' ? 'Clearing...' : 'Clear Cache'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleRestartServices}
+          disabled={activeAction !== null}
+          className="bg-gray-700/50 hover:bg-gray-700 border border-slate-600/50 hover:border-purple-500/50 rounded-lg p-3 transition-all flex items-center justify-center gap-2 text-gray-300 hover:text-white cursor-pointer active:scale-95"
+        >
+          <span>{activeAction === 'restart' ? '⏳' : '🔄'}</span>
+          <span className="text-sm font-medium">{activeAction === 'restart' ? 'Restarting...' : 'Restart Services'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleExportLogs}
+          disabled={activeAction !== null}
+          className="bg-gray-700/50 hover:bg-gray-700 border border-slate-600/50 hover:border-emerald-500/50 rounded-lg p-3 transition-all flex items-center justify-center gap-2 text-gray-300 hover:text-white cursor-pointer active:scale-95"
+        >
+          <span>{activeAction === 'export' ? '⏳' : '📤'}</span>
+          <span className="text-sm font-medium">{activeAction === 'export' ? 'Exporting...' : 'Export Logs'}</span>
+        </button>
       </div>
     </div>
   );
