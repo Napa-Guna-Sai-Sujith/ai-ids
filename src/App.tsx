@@ -87,11 +87,11 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
                   isDark ? 'bg-slate-800 border-slate-700 hover:bg-slate-700/80' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                <img src={user.picture} alt={user.name} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full ring-2 ring-blue-500/50" />
+                <img src={user.picture} alt={user.name} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full ring-2 ring-emerald-500/50" />
                 <div className="text-left hidden sm:block">
                   <p className="text-xs font-semibold flex items-center gap-1">
                     {user.name}
-                    <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-normal">Edit ✏️</span>
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold font-mono">ADMIN</span>
                   </p>
                   <p className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{user.email}</p>
                 </div>

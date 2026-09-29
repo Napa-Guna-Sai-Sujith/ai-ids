@@ -10,7 +10,7 @@ export default function UserProfileModal({ isOpen, onClose }: { isOpen: boolean;
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [avatarSeed, setAvatarSeed] = useState(user?.email || 'analyst');
-  const [role, setRole] = useState('Senior Security Analyst');
+  const [role, setRole] = useState('Security Administrator (Admin)');
   const [organization, setOrganization] = useState('CyberDefense Ops');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -59,6 +59,10 @@ export default function UserProfileModal({ isOpen, onClose }: { isOpen: boolean;
       >
         {/* Banner */}
         <div className="h-24 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative">
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold font-mono flex items-center gap-1.5 backdrop-blur-md">
+            <Shield className="w-3.5 h-3.5" />
+            ADMIN CONSOLE
+          </div>
           <button
             onClick={onClose}
             className="absolute top-3 right-3 p-1.5 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all cursor-pointer"
