@@ -183,6 +183,7 @@ class RealTimeDataService {
     const isAttack = attackType !== 'BENIGN';
     const isDDoS = attackType === 'DDoS';
     const isScan = attackType === 'Port Scan';
+    const isBrute = attackType === 'Web Attack' || attackType === 'DoS';
 
     // DDoS: high packet count, low IAT, many SYN flags
     // Port Scan: many SYN flags, low duration, many connections

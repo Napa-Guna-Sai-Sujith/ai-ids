@@ -1,16 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDetection } from '../context/DetectionContext';
 
-interface ThreatNotification {
-  id: string;
-  type: 'zero-day' | 'unauthorized-link';
-  attackCategory: string;
-  sourceIP: string;
-  confidence: number;
-  severity: 'critical' | 'high';
-  timestamp: Date;
-}
-
 export default function ThreatNotificationToast() {
   const { notifications, dismissNotification } = useDetection();
   const [visibleNotifs, setVisibleNotifs] = useState<string[]>([]);

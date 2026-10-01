@@ -53,6 +53,7 @@ export default function DataSources() {
 
   const [datasetFiles, setDatasetFiles] = useState<DatasetFile[]>(() => {
     const defaultFiles: DatasetFile[] = [
+      { name: 'all_attacks_comprehensive_dataset.csv', records: 130, size: '28.1 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 130, detectionCount: 124, accuracy: 99.8 },
       { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
       { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
       { name: 'packet_capture_2024.pcap', records: 890000, size: '2.1 GB', format: 'PCAP', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 845000, detectionCount: 3421, accuracy: 98.9 },
@@ -69,7 +70,6 @@ export default function DataSources() {
   });
 
   const [activeUsage, setActiveUsage] = useState<ActiveUsage[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<DatasetFile | null>(null);
 
   // File Upload & AI Training States
@@ -368,12 +368,20 @@ export default function DataSources() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div>
               <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                <span>🧪</span> Sample Test CSV Datasets
+                <span>🧪</span> Sample Test CSV Datasets (100+ Records & Attack Profiles)
               </h4>
-              <p className="text-xs text-slate-400">Download single-attack test datasets to test detection upload capabilities for each of the 4 supported attack types:</p>
+              <p className="text-xs text-slate-400">Download test datasets to test detection upload capabilities for all intrusion types:</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+            <a
+              href="/sample_datasets/all_attacks_comprehensive_dataset.csv"
+              download="all_attacks_comprehensive_dataset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold transition-all group lg:col-span-1 sm:col-span-2"
+            >
+              <span>⭐ All Attacks (130 Recs)</span>
+              <span className="text-[10px] bg-purple-500/30 px-1.5 py-0.5 rounded text-purple-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
             <a
               href="/sample_datasets/ddos_attack_dataset.csv"
               download="ddos_attack_dataset.csv"

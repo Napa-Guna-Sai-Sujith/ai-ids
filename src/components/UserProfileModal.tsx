@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Shield, Calendar, Edit2, Check, X, Camera, RefreshCw } from 'lucide-react';
+import { User, Mail, Shield, Calendar, Edit2, Check, X, RefreshCw } from 'lucide-react';
 import { saveUserToNeonDirect } from '../services/neonDb';
 
 export default function UserProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { user, isDark } = useAuth();
+  const { user, isDark, logout } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');

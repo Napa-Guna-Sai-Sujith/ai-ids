@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, Download, Database, ShieldCheck, Activity } from 'lucide-react';
+import { X, FileSpreadsheet, FileJson, Code2, HardDrive, FileText, Download, Database, ShieldCheck } from 'lucide-react';
 
 interface DatasetFile {
   name: string;

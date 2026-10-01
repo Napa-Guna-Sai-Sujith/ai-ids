@@ -3,7 +3,7 @@ import { DetectionState } from '../types';
 import { useDetection } from '../context/DetectionContext';
 
 export default function DetectionStatus() {
-  const { isDetectionActive, activeFileNames } = useDetection();
+  const { isDetectionActive } = useDetection();
 
   const [state, setState] = useState<DetectionState>({
     isNormal: true,

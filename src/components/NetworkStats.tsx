@@ -32,7 +32,7 @@ export default function NetworkStats() {
     { name: 'HTTPS', percentage: 10, color: '#EF4444' },
   ]);
 
-  const [topSources] = useState([
+  const [topSources, setTopSources] = useState([
     { ip: '192.168.1.100', packets: 15420, percentage: 25 },
     { ip: '192.168.1.101', packets: 12350, percentage: 20 },
     { ip: '10.0.0.50', packets: 9870, percentage: 16 },

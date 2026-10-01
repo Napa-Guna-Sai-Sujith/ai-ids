@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AttackTypeName } from '../types';
-import { useDetection, ThreatNotification } from '../context/DetectionContext';
+import { useDetection } from '../context/DetectionContext';
 
 interface DetectionEvent {
   id: string;
@@ -35,8 +35,8 @@ export const DetectionHistory: React.FC = () => {
 
   // Generate random detection event matching the active file's attack type & correct severity
   const generateDetection = (): DetectionEvent => {
-    const availableTypes = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
-    const attackType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+    const availableTypes: AttackTypeName[] = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
+    const attackType: AttackTypeName = availableTypes[Math.floor(Math.random() * availableTypes.length)];
 
     const rand = Math.random();
     let severity: DetectionEvent['severity'] = 'low';
