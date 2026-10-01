@@ -14,6 +14,7 @@ import MLFeatures from './components/MLFeatures';
 import LiveStream from './components/LiveStream';
 import LoginPage from './components/LoginPage';
 import UserProfileModal from './components/UserProfileModal';
+import ThreatNotificationToast from './components/ThreatNotification';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DetectionProvider, useDetection } from './context/DetectionContext';
 
@@ -247,6 +248,9 @@ function DashboardContent({ isDark, toggleTheme }: { isDark: boolean; toggleThem
 
       {/* Editable User Profile Modal */}
       <UserProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+
+      {/* Global Threat Pop-up Notifications */}
+      <ThreatNotificationToast />
     </div>
   );
 }

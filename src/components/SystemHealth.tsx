@@ -34,6 +34,55 @@ export default function SystemHealth() {
     }
   }, [logs]);
 
+  // Uptime counter — increments every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setUptime(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Metric updater — simulates live metric fluctuation every 3 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMetrics(prev =>
+        prev.map(m => {
+          const delta = (Math.random() - 0.5) * 6;
+          const newVal = Math.max(10, Math.min(95, m.value + delta));
+          const status: SystemMetric['status'] =
+            newVal > 85 ? 'critical' : newVal > 70 ? 'warning' : 'healthy';
+          return { ...m, value: newVal, status };
+        })
+      );
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Automatic log generator — adds a system log entry every 8 seconds
+  useEffect(() => {
+    const logMessages: Array<{ level: LogEntry['level']; message: string; component: string }> = [
+      { level: 'info', message: 'Packet inspection engine processed 12,847 flows', component: 'IDS Engine' },
+      { level: 'info', message: 'ML model inference pipeline healthy — latency 11.4ms', component: 'ML Model' },
+      { level: 'success', message: 'Threat signature database synchronized (v2024.10.01)', component: 'Database' },
+      { level: 'info', message: 'WebSocket connections: 3 active, 0 pending', component: 'API Gateway' },
+      { level: 'success', message: 'Automated backup checkpoint created successfully', component: 'System' },
+      { level: 'info', message: 'Network traffic analysis: 2.4 GB processed in last 60s', component: 'Network' },
+      { level: 'warning', message: 'Elevated packet rate detected on port 443 — monitoring', component: 'IDS Engine' },
+      { level: 'info', message: 'Feature extraction pipeline: 248 features computed per flow', component: 'ML Model' },
+      { level: 'success', message: 'SSL/TLS certificate validation passed for all endpoints', component: 'Security' },
+      { level: 'info', message: 'Log rotation completed — archived 847 entries', component: 'Log Collector' },
+      { level: 'info', message: 'Anomaly detection threshold recalibrated via adaptive learning', component: 'ML Model' },
+      { level: 'success', message: 'Zero false positives in last 500 inspected flows', component: 'IDS Engine' },
+    ];
+
+    const timer = setInterval(() => {
+      const msg = logMessages[Math.floor(Math.random() * logMessages.length)];
+      setLogs(prev => [...prev, { ...msg, timestamp: new Date() }].slice(-100));
+      setLastCheck(new Date());
+    }, 8000);
+    return () => clearInterval(timer);
+  }, []);
+
   const formatUptime = (seconds: number): string => {
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);

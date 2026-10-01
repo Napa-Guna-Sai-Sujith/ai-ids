@@ -1,6 +1,16 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { AttackTypeName } from '../types';
 
+export interface ThreatNotification {
+  id: string;
+  type: 'zero-day' | 'unauthorized-link';
+  attackCategory: string;
+  sourceIP: string;
+  confidence: number;
+  severity: 'critical' | 'high';
+  timestamp: Date;
+}
+
 interface DetectionContextType {
   activeSwitches: { [fileName: string]: boolean };
   activeFileNames: string[];
@@ -9,6 +19,10 @@ interface DetectionContextType {
   latestDetectedAttack: AttackTypeName | null;
   setLatestDetectedAttack: (attack: AttackTypeName | null) => void;
   toggleFileDetection: (fileName: string) => void;
+  // Notification system
+  notifications: ThreatNotification[];
+  addNotification: (notif: ThreatNotification) => void;
+  dismissNotification: (id: string) => void;
 }
 
 const DetectionContext = createContext<DetectionContextType | undefined>(undefined);
@@ -25,12 +39,21 @@ export const getAttackTypesForFile = (fileName: string): AttackTypeName[] => {
 export const DetectionProvider = ({ children }: { children: ReactNode }) => {
   const [activeSwitches, setActiveSwitches] = useState<{ [fileName: string]: boolean }>({});
   const [latestDetectedAttack, setLatestDetectedAttack] = useState<AttackTypeName | null>(null);
+  const [notifications, setNotifications] = useState<ThreatNotification[]>([]);
 
   const toggleFileDetection = (fileName: string) => {
     setActiveSwitches((prev) => {
       const isCurrentlyActive = !!prev[fileName];
       return { ...prev, [fileName]: !isCurrentlyActive };
     });
+  };
+
+  const addNotification = (notif: ThreatNotification) => {
+    setNotifications((prev) => [notif, ...prev].slice(0, 5)); // Max 5 visible at once
+  };
+
+  const dismissNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   const activeFileNames = Object.keys(activeSwitches).filter((name) => activeSwitches[name]);
@@ -53,6 +76,9 @@ export const DetectionProvider = ({ children }: { children: ReactNode }) => {
         latestDetectedAttack: isDetectionActive ? latestDetectedAttack : null,
         setLatestDetectedAttack,
         toggleFileDetection,
+        notifications,
+        addNotification,
+        dismissNotification,
       }}
     >
       {children}

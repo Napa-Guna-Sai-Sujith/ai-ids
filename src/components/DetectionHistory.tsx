@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AttackTypeName } from '../types';
-import { useDetection } from '../context/DetectionContext';
+import { useDetection, ThreatNotification } from '../context/DetectionContext';
 
 interface DetectionEvent {
   id: string;
@@ -10,6 +10,7 @@ interface DetectionEvent {
   sourceIP: string;
   destinationIP: string;
   confidence: number;
+  threatLabel?: 'Zero-Day Attack' | 'Unauthorized Link';
 }
 
 const getAttackColor = (attackType: AttackTypeName): string => {
@@ -23,7 +24,7 @@ const getAttackColor = (attackType: AttackTypeName): string => {
 };
 
 export const DetectionHistory: React.FC = () => {
-  const { isDetectionActive, activeAttackTypes, setLatestDetectedAttack } = useDetection();
+  const { isDetectionActive, activeAttackTypes, setLatestDetectedAttack, addNotification } = useDetection();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detections, setDetections] = useState<DetectionEvent[]>([]);
   const [chartData, setChartData] = useState<number[]>(new Array(24).fill(0));
@@ -60,6 +61,19 @@ export const DetectionHistory: React.FC = () => {
                        severity === 'medium' ? 78 + Math.random() * 9 :
                        60 + Math.random() * 15;
 
+    // Determine if this is a special threat (Zero-Day or Unauthorized Link)
+    let threatLabel: DetectionEvent['threatLabel'] = undefined;
+    const threatRoll = Math.random();
+
+    if (threatRoll < 0.12 && (severity === 'critical' || severity === 'high')) {
+      // ~12% chance: Zero-Day Attack (can be any attack category)
+      threatLabel = 'Zero-Day Attack';
+      severity = 'critical'; // Zero-day is always critical
+    } else if (threatRoll < 0.22 && attackType === 'Web Attack' && (severity === 'critical' || severity === 'high')) {
+      // ~10% chance: Unauthorized Link (only under Web Attack)
+      threatLabel = 'Unauthorized Link';
+    }
+
     return {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date(),
@@ -68,6 +82,7 @@ export const DetectionHistory: React.FC = () => {
       sourceIP: generateIP(),
       destinationIP: generateIP(),
       confidence,
+      threatLabel,
     };
   };
 
@@ -83,6 +98,19 @@ export const DetectionHistory: React.FC = () => {
         const newDetection = generateDetection();
         setDetections(prev => [newDetection, ...prev].slice(0, 50));
         setLatestDetectedAttack(newDetection.attackType);
+
+        // Fire pop-up notification for Zero-Day or Unauthorized Link threats
+        if (newDetection.threatLabel) {
+          addNotification({
+            id: newDetection.id,
+            type: newDetection.threatLabel === 'Zero-Day Attack' ? 'zero-day' : 'unauthorized-link',
+            attackCategory: newDetection.attackType,
+            sourceIP: newDetection.sourceIP,
+            confidence: newDetection.confidence,
+            severity: newDetection.severity as 'critical' | 'high',
+            timestamp: newDetection.timestamp,
+          });
+        }
         
         // Update chart data
         setChartData(prev => {
@@ -304,6 +332,9 @@ export const DetectionHistory: React.FC = () => {
                     key={detection.id}
                     className={`border-t border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${
                       selectedAttack?.id === detection.id ? 'bg-blue-900/20' : ''
+                    } ${
+                      detection.threatLabel === 'Zero-Day Attack' ? 'bg-red-900/10 border-l-2 border-l-red-500' :
+                      detection.threatLabel === 'Unauthorized Link' ? 'bg-purple-900/10 border-l-2 border-l-purple-500' : ''
                     }`}
                     onClick={() => setSelectedAttack(detection)}
                   >
@@ -311,15 +342,27 @@ export const DetectionHistory: React.FC = () => {
                       {detection.timestamp.toLocaleTimeString()}
                     </td>
                     <td className="px-4 py-2">
-                      <span
-                        className="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                        style={{
-                          backgroundColor: `${getAttackColor(detection.attackType)}20`,
-                          color: getAttackColor(detection.attackType),
-                        }}
-                      >
-                        {detection.attackType}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                          style={{
+                            backgroundColor: `${getAttackColor(detection.attackType)}20`,
+                            color: getAttackColor(detection.attackType),
+                          }}
+                        >
+                          {detection.attackType}
+                        </span>
+                        {detection.threatLabel && (
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold animate-pulse ${
+                            detection.threatLabel === 'Zero-Day Attack'
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                              : 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
+                          }`}>
+                            {detection.threatLabel === 'Zero-Day Attack' ? '⚠️' : '🔗'}
+                            {detection.threatLabel}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-2">
                       {getSeverityBadge(detection.severity)}
@@ -367,10 +410,24 @@ export const DetectionHistory: React.FC = () => {
             <div>
               <span className="text-slate-400">Attack Type:</span>
               <span className="ml-2 text-white font-medium">{selectedAttack.attackType}</span>
+              {selectedAttack.threatLabel && (
+                <span className={`ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                  selectedAttack.threatLabel === 'Zero-Day Attack'
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                    : 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
+                }`}>
+                  {selectedAttack.threatLabel === 'Zero-Day Attack' ? '⚠️' : '🔗'}
+                  {selectedAttack.threatLabel}
+                </span>
+              )}
             </div>
             <div>
               <span className="text-slate-400">Severity:</span>
-              <span className={`ml-2 ${getSeverityText(selectedAttack.severity)} font-medium`}>
+              <span className={`ml-2 font-medium ${
+                selectedAttack.severity === 'critical' ? 'text-red-400' :
+                selectedAttack.severity === 'high' ? 'text-orange-400' :
+                selectedAttack.severity === 'medium' ? 'text-yellow-400' : 'text-cyan-400'
+              }`}>
                 {selectedAttack.severity.toUpperCase()}
               </span>
             </div>
