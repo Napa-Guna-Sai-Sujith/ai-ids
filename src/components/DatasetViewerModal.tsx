@@ -19,6 +19,23 @@ interface DatasetViewerModalProps {
 
 const getSampleContentForFile = (fileName: string) => {
   const lower = fileName.toLowerCase();
+  if (lower.includes('benign') || lower.includes('clean')) {
+    return {
+      type: 'table',
+      headers: ['Record ID', 'Timestamp', 'Source IP', 'Dest IP', 'Protocol', 'Category', 'Traffic Type', 'Status', 'Confidence'],
+      rows: [
+        ['BENIGN-1001', '2026-10-02 09:00:25', '10.0.1.50', '172.16.0.10:587', 'TCP', 'BENIGN', 'Internal SMTP Mail Relay', 'ALLOWED', '99.4%'],
+        ['BENIGN-1002', '2026-10-02 09:00:37', '192.168.1.200', '192.168.1.20:22', 'SSH', 'BENIGN', 'Secure SSH Admin Session', 'ALLOWED', '98.9%'],
+        ['BENIGN-1003', '2026-10-02 09:00:54', '192.168.1.105', '151.101.1.140:443', 'HTTPS', 'BENIGN', 'Static CDN Asset Retrieval', 'ALLOWED', '99.6%'],
+        ['BENIGN-1004', '2026-10-02 09:01:27', '10.0.1.10', '192.168.1.20:443', 'WSS', 'BENIGN', 'WebSocket Live State Feed', 'ALLOWED', '99.1%'],
+        ['BENIGN-1005', '2026-10-02 09:01:54', '10.0.1.10', '10.0.0.12:22', 'SSH', 'BENIGN', 'Secure SSH Admin Session', 'ALLOWED', '99.6%'],
+        ['BENIGN-1006', '2026-10-02 09:02:00', '172.16.10.5', '10.0.0.12:8443', 'HTTPS', 'BENIGN', 'Secure REST API Call', 'ALLOWED', '98.9%'],
+        ['BENIGN-1007', '2026-10-02 09:02:22', '192.168.1.101', '10.0.0.50:3306', 'TCP', 'BENIGN', 'MySQL DB Connection Pool', 'ALLOWED', '99.5%'],
+        ['BENIGN-1008', '2026-10-02 09:05:00', '192.168.1.110', '1.1.1.1:53', 'UDP', 'BENIGN', 'Routine DNS Resolution', 'ALLOWED', '98.8%'],
+      ],
+    };
+  }
+
   if (lower.includes('network') || lower.includes('csv')) {
     return {
       type: 'table',

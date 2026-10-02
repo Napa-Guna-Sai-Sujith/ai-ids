@@ -53,6 +53,7 @@ export default function DataSources() {
 
   const [datasetFiles, setDatasetFiles] = useState<DatasetFile[]>(() => {
     const defaultFiles: DatasetFile[] = [
+      { name: 'benign_normal_traffic_dataset.csv', records: 125, size: '26.0 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 125, detectionCount: 0, accuracy: 99.9 },
       { name: 'all_attacks_comprehensive_dataset.csv', records: 130, size: '28.1 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 130, detectionCount: 124, accuracy: 99.8 },
       { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
       { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
@@ -135,7 +136,11 @@ export default function DataSources() {
       const lowerName = targetFileName.toLowerCase();
 
       let detectedType = 'DDoS';
-      if (lowerName.includes('ddos')) {
+      const isBenign = lowerName.includes('benign') || lowerName.includes('clean');
+
+      if (isBenign) {
+        detectedType = 'BENIGN (Normal Traffic)';
+      } else if (lowerName.includes('ddos')) {
         detectedType = 'DDoS';
       } else if (lowerName.includes('dos')) {
         detectedType = 'DoS';
@@ -149,22 +154,22 @@ export default function DataSources() {
       }
 
       const newUsage: ActiveUsage = {
-        detectionId: `DET-${Date.now().toString().slice(-6)}`,
+        detectionId: isBenign ? `FLOW-${Date.now().toString().slice(-6)}` : `DET-${Date.now().toString().slice(-6)}`,
         dataSource: targetFileName,
         recordsAnalyzed: Math.floor(Math.random() * 5000) + 100,
-        status: Math.random() > 0.3 ? 'Analyzed' : 'Processing',
+        status: 'Analyzed',
         timestamp: new Date().toLocaleTimeString(),
         attackType: detectedType,
-        confidence: Math.floor(Math.random() * 10) + 90,
+        confidence: isBenign ? 99.8 : Math.floor(Math.random() * 10) + 90,
       };
 
       setActiveUsage(prev => [newUsage, ...prev].slice(0, 20));
 
-      // Increment analyzed records & detection count for the target file
+      // Increment analyzed records (and detection count only for attack files)
       setDatasetFiles(files =>
         files.map(f => {
           if (f.name === targetFileName) {
-            const addedDetections = Math.random() > 0.4 ? 1 : 0;
+            const addedDetections = isBenign ? 0 : (Math.random() > 0.4 ? 1 : 0);
             return {
               ...f,
               recordsAnalyzed: Math.min(f.records, f.recordsAnalyzed + newUsage.recordsAnalyzed),
@@ -373,11 +378,19 @@ export default function DataSources() {
               <p className="text-xs text-slate-400">Download test datasets to test detection upload capabilities for all intrusion types:</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+            <a
+              href="/sample_datasets/benign_normal_traffic_dataset.csv"
+              download="benign_normal_traffic_dataset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold transition-all group"
+            >
+              <span>🟢 Benign (125 Clean)</span>
+              <span className="text-[10px] bg-emerald-500/30 px-1.5 py-0.5 rounded text-emerald-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
             <a
               href="/sample_datasets/all_attacks_comprehensive_dataset.csv"
               download="all_attacks_comprehensive_dataset.csv"
-              className="flex items-center justify-between p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold transition-all group lg:col-span-1 sm:col-span-2"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold transition-all group"
             >
               <span>⭐ All Attacks (130 Recs)</span>
               <span className="text-[10px] bg-purple-500/30 px-1.5 py-0.5 rounded text-purple-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
@@ -608,7 +621,8 @@ export default function DataSources() {
                 <tr key={index} className="hover:bg-gray-700/30 transition-colors">
                   <td className="px-4 py-3 text-blue-400 font-mono text-sm">{usage.detectionId}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs ${
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                      usage.attackType.includes('BENIGN') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
                       usage.attackType === 'DDoS' ? 'bg-red-500/20 text-red-400' :
                       usage.attackType === 'DoS' ? 'bg-orange-500/20 text-orange-400' :
                       'bg-yellow-500/20 text-yellow-400'
