@@ -24,11 +24,28 @@ const getAttackColor = (attackType: AttackTypeName): string => {
 };
 
 export const DetectionHistory: React.FC = () => {
-  const { isDetectionActive, activeAttackTypes, setLatestDetectedAttack, addNotification } = useDetection();
+  const { 
+    isDetectionActive, 
+    activeAttackTypes, 
+    setLatestDetectedAttack, 
+    addNotification,
+    highlightedDetectionId,
+    setSelectedThreatModal
+  } = useDetection();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detections, setDetections] = useState<DetectionEvent[]>([]);
   const [chartData, setChartData] = useState<number[]>(new Array(24).fill(0));
   const [selectedAttack, setSelectedAttack] = useState<DetectionEvent | null>(null);
+
+  // Synchronize: when highlightedDetectionId changes from a pop-up click, auto-select that detection
+  useEffect(() => {
+    if (highlightedDetectionId) {
+      const match = detections.find(d => d.id === highlightedDetectionId);
+      if (match) {
+        setSelectedAttack(match);
+      }
+    }
+  }, [highlightedDetectionId, detections]);
 
   // Generate random IP
   const generateIP = () => `${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
@@ -99,16 +116,24 @@ export const DetectionHistory: React.FC = () => {
         setDetections(prev => [newDetection, ...prev].slice(0, 50));
         setLatestDetectedAttack(newDetection.attackType);
 
-        // Fire pop-up notification for Zero-Day or Unauthorized Link threats
+        // Fire pop-up notification for Zero-Day or Unauthorized Link threats with matching metadata
         if (newDetection.threatLabel) {
           addNotification({
             id: newDetection.id,
             type: newDetection.threatLabel === 'Zero-Day Attack' ? 'zero-day' : 'unauthorized-link',
             attackCategory: newDetection.attackType,
             sourceIP: newDetection.sourceIP,
+            destinationIP: newDetection.destinationIP,
             confidence: newDetection.confidence,
             severity: newDetection.severity as 'critical' | 'high',
             timestamp: newDetection.timestamp,
+            mitreAttackId: newDetection.threatLabel === 'Zero-Day Attack' ? 'T1203 / T1068' : 'T1566.002 / T1071',
+            mitreTactic: newDetection.threatLabel === 'Zero-Day Attack' 
+              ? 'Execution & Privilege Escalation (Zero-Day Vector)' 
+              : 'Initial Access & Command and Control (C2)',
+            aiRationale: newDetection.threatLabel === 'Zero-Day Attack' 
+              ? `CNN-LSTM temporal analysis flagged unpatched execution payload on target ${newDetection.destinationIP} with 98.7% anomaly variance.`
+              : `Outbound flow attempted unauthorized proxy tunnel / C2 connection to untrusted host.`
           });
         }
         
@@ -327,65 +352,73 @@ export const DetectionHistory: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {detections.map((detection) => (
-                  <tr
-                    key={detection.id}
-                    className={`border-t border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${
-                      selectedAttack?.id === detection.id ? 'bg-blue-900/20' : ''
-                    } ${
-                      detection.threatLabel === 'Zero-Day Attack' ? 'bg-red-900/10 border-l-2 border-l-red-500' :
-                      detection.threatLabel === 'Unauthorized Link' ? 'bg-purple-900/10 border-l-2 border-l-purple-500' : ''
-                    }`}
-                    onClick={() => setSelectedAttack(detection)}
-                  >
-                    <td className="px-4 py-2 text-xs text-slate-400 font-mono">
-                      {detection.timestamp.toLocaleTimeString()}
-                    </td>
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                          style={{
-                            backgroundColor: `${getAttackColor(detection.attackType)}20`,
-                            color: getAttackColor(detection.attackType),
-                          }}
-                        >
-                          {detection.attackType}
-                        </span>
-                        {detection.threatLabel && (
-                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold animate-pulse ${
-                            detection.threatLabel === 'Zero-Day Attack'
-                              ? 'bg-red-500/20 text-red-400 border border-red-500/40'
-                              : 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
-                          }`}>
-                            {detection.threatLabel === 'Zero-Day Attack' ? '⚠️' : '🔗'}
-                            {detection.threatLabel}
+                {detections.map((detection) => {
+                  const isHighlighted = highlightedDetectionId === detection.id;
+                  const isSelected = selectedAttack?.id === detection.id;
+                  return (
+                    <tr
+                      key={detection.id}
+                      className={`border-t border-slate-700/50 hover:bg-slate-700/30 transition-all cursor-pointer ${
+                        isHighlighted
+                          ? 'bg-blue-600/30 ring-2 ring-blue-400 shadow-lg shadow-blue-500/20 animate-pulse'
+                          : isSelected
+                          ? 'bg-blue-900/25 ring-1 ring-blue-500/50'
+                          : ''
+                      } ${
+                        detection.threatLabel === 'Zero-Day Attack' ? 'bg-red-900/10 border-l-4 border-l-red-500' :
+                        detection.threatLabel === 'Unauthorized Link' ? 'bg-purple-900/10 border-l-4 border-l-purple-500' : ''
+                      }`}
+                      onClick={() => setSelectedAttack(detection)}
+                    >
+                      <td className="px-4 py-2 text-xs text-slate-400 font-mono">
+                        {detection.timestamp.toLocaleTimeString()}
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                            style={{
+                              backgroundColor: `${getAttackColor(detection.attackType)}20`,
+                              color: getAttackColor(detection.attackType),
+                            }}
+                          >
+                            {detection.attackType}
                           </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-2">
-                      {getSeverityBadge(detection.severity)}
-                    </td>
-                    <td className="px-4 py-2 text-xs text-slate-400 font-mono">
-                      {detection.sourceIP}
-                    </td>
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
-                            style={{ width: `${detection.confidence}%` }}
-                          />
+                          {detection.threatLabel && (
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold animate-pulse ${
+                              detection.threatLabel === 'Zero-Day Attack'
+                                ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                                : 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
+                            }`}>
+                              {detection.threatLabel === 'Zero-Day Attack' ? '⚠️' : '🔗'}
+                              {detection.threatLabel}
+                            </span>
+                          )}
                         </div>
-                        <span className="text-xs text-slate-400">{detection.confidence.toFixed(0)}%</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2">
-                      {getActionStatusBadge(detection.severity)}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-4 py-2">
+                        {getSeverityBadge(detection.severity)}
+                      </td>
+                      <td className="px-4 py-2 text-xs text-slate-400 font-mono">
+                        {detection.sourceIP}
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
+                              style={{ width: `${detection.confidence}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-slate-400">{detection.confidence.toFixed(0)}%</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-2">
+                        {getActionStatusBadge(detection.severity)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -394,9 +427,14 @@ export const DetectionHistory: React.FC = () => {
 
       {/* Selected Attack Details */}
       {selectedAttack && (
-        <div className="mt-4 p-4 bg-slate-900/50 rounded-xl border border-slate-700">
+        <div className="mt-4 p-4 bg-slate-900/70 rounded-xl border border-blue-500/30 shadow-lg">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-semibold text-white">Attack Details</h4>
+            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+              <span>🎯 Attack Investigation Telemetry</span>
+              {selectedAttack.threatLabel && (
+                <span className="text-xs font-normal text-slate-400">(Linked with Live Pop-up Alert)</span>
+              )}
+            </h4>
             <button
               onClick={() => setSelectedAttack(null)}
               className="text-slate-400 hover:text-white transition-colors"
@@ -406,24 +444,25 @@ export const DetectionHistory: React.FC = () => {
               </svg>
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="text-slate-400">Attack Type:</span>
-              <span className="ml-2 text-white font-medium">{selectedAttack.attackType}</span>
-              {selectedAttack.threatLabel && (
-                <span className={`ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                  selectedAttack.threatLabel === 'Zero-Day Attack'
-                    ? 'bg-red-500/20 text-red-400 border border-red-500/40'
-                    : 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
-                }`}>
-                  {selectedAttack.threatLabel === 'Zero-Day Attack' ? '⚠️' : '🔗'}
-                  {selectedAttack.threatLabel}
-                </span>
-              )}
+              <span className="text-slate-400 block text-xs">Attack Type:</span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="text-white font-medium">{selectedAttack.attackType}</span>
+                {selectedAttack.threatLabel && (
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    selectedAttack.threatLabel === 'Zero-Day Attack'
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                      : 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
+                  }`}>
+                    {selectedAttack.threatLabel}
+                  </span>
+                )}
+              </div>
             </div>
             <div>
-              <span className="text-slate-400">Severity:</span>
-              <span className={`ml-2 font-medium ${
+              <span className="text-slate-400 block text-xs">Severity:</span>
+              <span className={`font-semibold mt-0.5 inline-block ${
                 selectedAttack.severity === 'critical' ? 'text-red-400' :
                 selectedAttack.severity === 'high' ? 'text-orange-400' :
                 selectedAttack.severity === 'medium' ? 'text-yellow-400' : 'text-cyan-400'
@@ -432,22 +471,56 @@ export const DetectionHistory: React.FC = () => {
               </span>
             </div>
             <div>
-              <span className="text-slate-400">Source IP:</span>
-              <span className="ml-2 text-white font-mono text-xs">{selectedAttack.sourceIP}</span>
+              <span className="text-slate-400 block text-xs">Confidence:</span>
+              <span className="text-green-400 font-semibold mt-0.5 inline-block">{selectedAttack.confidence.toFixed(2)}%</span>
             </div>
             <div>
-              <span className="text-slate-400">Destination IP:</span>
-              <span className="ml-2 text-white font-mono text-xs">{selectedAttack.destinationIP}</span>
+              <span className="text-slate-400 block text-xs">Source IP:</span>
+              <span className="text-white font-mono text-xs">{selectedAttack.sourceIP}</span>
             </div>
             <div>
-              <span className="text-slate-400">Confidence:</span>
-              <span className="ml-2 text-green-400 font-medium">{selectedAttack.confidence.toFixed(2)}%</span>
+              <span className="text-slate-400 block text-xs">Destination IP:</span>
+              <span className="text-white font-mono text-xs">{selectedAttack.destinationIP}</span>
             </div>
             <div>
-              <span className="text-slate-400">Timestamp:</span>
-              <span className="ml-2 text-white font-mono text-xs">{selectedAttack.timestamp.toLocaleString()}</span>
+              <span className="text-slate-400 block text-xs">Timestamp:</span>
+              <span className="text-white font-mono text-xs">{selectedAttack.timestamp.toLocaleTimeString()}</span>
             </div>
           </div>
+
+          {/* Deep Forensic Threat Report Trigger */}
+          {selectedAttack.threatLabel && (
+            <div className="mt-3 pt-3 border-t border-slate-700/60 flex items-center justify-between">
+              <span className="text-xs text-slate-400">
+                Threat Intel classified under MITRE ATT&CK framework
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedThreatModal({
+                    id: selectedAttack.id,
+                    type: selectedAttack.threatLabel === 'Zero-Day Attack' ? 'zero-day' : 'unauthorized-link',
+                    attackCategory: selectedAttack.attackType,
+                    sourceIP: selectedAttack.sourceIP,
+                    destinationIP: selectedAttack.destinationIP,
+                    confidence: selectedAttack.confidence,
+                    severity: selectedAttack.severity === 'critical' ? 'critical' : 'high',
+                    timestamp: selectedAttack.timestamp,
+                    mitreAttackId: selectedAttack.threatLabel === 'Zero-Day Attack' ? 'T1203 / T1068 (Exploitation of Unknown Vuln)' : 'T1071.001 (Web Protocol / Phishing Link)',
+                    mitreTactic: selectedAttack.threatLabel === 'Zero-Day Attack' ? 'Initial Access / Execution' : 'Command & Control / Initial Access',
+                    aiRationale: selectedAttack.threatLabel === 'Zero-Day Attack'
+                      ? `Zero-Day anomaly flagged by Deep Autoencoder reconstruction error (${selectedAttack.confidence.toFixed(1)}% confidence).`
+                      : `Unauthorized malicious URL detected with suspicious entropy patterns (${selectedAttack.confidence.toFixed(1)}% confidence).`
+                  });
+                }}
+                className="py-1.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow transition-all cursor-pointer"
+              >
+                <span>🔬 View Threat Intel Breakdown</span>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

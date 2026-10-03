@@ -6,9 +6,13 @@ export interface ThreatNotification {
   type: 'zero-day' | 'unauthorized-link';
   attackCategory: string;
   sourceIP: string;
+  destinationIP?: string;
   confidence: number;
   severity: 'critical' | 'high';
   timestamp: Date;
+  mitreAttackId?: string;
+  mitreTactic?: string;
+  aiRationale?: string;
 }
 
 interface DetectionContextType {
@@ -23,6 +27,11 @@ interface DetectionContextType {
   notifications: ThreatNotification[];
   addNotification: (notif: ThreatNotification) => void;
   dismissNotification: (id: string) => void;
+  // Pop-up details investigation modal state
+  selectedThreatModal: ThreatNotification | null;
+  setSelectedThreatModal: (threat: ThreatNotification | null) => void;
+  highlightedDetectionId: string | null;
+  setHighlightedDetectionId: (id: string | null) => void;
 }
 
 const DetectionContext = createContext<DetectionContextType | undefined>(undefined);
@@ -40,6 +49,8 @@ export const DetectionProvider = ({ children }: { children: ReactNode }) => {
   const [activeSwitches, setActiveSwitches] = useState<{ [fileName: string]: boolean }>({});
   const [latestDetectedAttack, setLatestDetectedAttack] = useState<AttackTypeName | null>(null);
   const [notifications, setNotifications] = useState<ThreatNotification[]>([]);
+  const [selectedThreatModal, setSelectedThreatModal] = useState<ThreatNotification | null>(null);
+  const [highlightedDetectionId, setHighlightedDetectionId] = useState<string | null>(null);
 
   const toggleFileDetection = (fileName: string) => {
     setActiveSwitches((prev) => {
@@ -79,6 +90,10 @@ export const DetectionProvider = ({ children }: { children: ReactNode }) => {
         notifications,
         addNotification,
         dismissNotification,
+        selectedThreatModal,
+        setSelectedThreatModal,
+        highlightedDetectionId,
+        setHighlightedDetectionId,
       }}
     >
       {children}
