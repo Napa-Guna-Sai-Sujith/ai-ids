@@ -51,34 +51,29 @@ export default function DataSources() {
   const { user } = useAuth();
   const { activeSwitches, activeFileNames, toggleFileDetection } = useDetection();
 
+  // Excluded files that should not be displayed on the website
+  const EXCLUDED_FILES = new Set([
+    'official_nsl_kdd_test.csv',
+    'official_nsl_kdd_train.csv',
+    'benign_normal_traffic_dataset.csv',
+    'all_attacks_comprehensive_dataset.csv',
+    'zero_day_threat_dataset.csv',
+    'unauthorized_links_dataset.csv',
+    'cicids2017_sample_subset.csv',
+    'nsl_kdd_sample_subset.csv',
+  ]);
+
   const [datasetFiles, setDatasetFiles] = useState<DatasetFile[]>(() => {
     const defaultFiles: DatasetFile[] = [
-      { name: 'official_nsl_kdd_test.csv', records: 1000, size: '118.8 KB', format: 'CSV', status: 'Active', lastUpdated: 'Online Benchmark', recordsAnalyzed: 1000, detectionCount: 472, accuracy: 99.8 },
-      { name: 'official_nsl_kdd_train.csv', records: 1000, size: '117.6 KB', format: 'CSV', status: 'Active', lastUpdated: 'Online Benchmark', recordsAnalyzed: 1000, detectionCount: 468, accuracy: 99.8 },
-      { name: 'benign_normal_traffic_dataset.csv', records: 125, size: '26.0 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 125, detectionCount: 0, accuracy: 99.9 },
-      { name: 'all_attacks_comprehensive_dataset.csv', records: 130, size: '28.1 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 130, detectionCount: 124, accuracy: 99.8 },
-      { name: 'zero_day_threat_dataset.csv', records: 120, size: '26.4 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 119, accuracy: 99.7 },
-      { name: 'unauthorized_links_dataset.csv', records: 120, size: '25.8 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 118, accuracy: 99.8 },
-      { name: 'cicids2017_sample_subset.csv', records: 150, size: '32.1 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 150, detectionCount: 148, accuracy: 99.8 },
-      { name: 'nsl_kdd_sample_subset.csv', records: 150, size: '31.5 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 150, detectionCount: 146, accuracy: 99.7 },
       { name: 'ddos_attack_dataset.csv', records: 120, size: '25.9 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 119, accuracy: 99.9 },
       { name: 'dos_attack_dataset.csv', records: 120, size: '25.7 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 119, accuracy: 99.8 },
       { name: 'port_scan_dataset.csv', records: 120, size: '26.0 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 118, accuracy: 99.8 },
       { name: 'web_attack_dataset.csv', records: 120, size: '26.2 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 118, accuracy: 99.8 },
     ];
 
-    // Core datasets that must always be visible (never filtered by localStorage)
-    const coreDatasetNames = new Set(defaultFiles.map(f => f.name));
-
     try {
       const removed: string[] = JSON.parse(localStorage.getItem('removed_dataset_files') || '[]');
-      // Clean up: remove any core datasets from the removed list so they always show
-      const cleanedRemoved = removed.filter(name => !coreDatasetNames.has(name));
-      if (cleanedRemoved.length !== removed.length) {
-        localStorage.setItem('removed_dataset_files', JSON.stringify(cleanedRemoved));
-      }
-      // Only filter out user-uploaded files that were manually removed, never core datasets
-      return defaultFiles;
+      return defaultFiles.filter(f => !removed.includes(f.name) && !EXCLUDED_FILES.has(f.name));
     } catch {
       return defaultFiles;
     }
@@ -103,7 +98,7 @@ export default function DataSources() {
         if (Array.isArray(data) && data.length > 0) {
           const removed = JSON.parse(localStorage.getItem('removed_dataset_files') || '[]');
           const dbDatasets: DatasetFile[] = data
-            .filter((d: any) => !removed.includes(d.file_name))
+            .filter((d: any) => !removed.includes(d.file_name) && !EXCLUDED_FILES.has(d.file_name))
             .map((d: any) => ({
               name: d.file_name,
               records: d.records || 10000,
@@ -127,10 +122,10 @@ export default function DataSources() {
 
   // Core datasets that cannot be removed
   const CORE_DATASET_NAMES = new Set([
-    'official_nsl_kdd_test.csv', 'official_nsl_kdd_train.csv', 'benign_normal_traffic_dataset.csv',
-    'all_attacks_comprehensive_dataset.csv', 'zero_day_threat_dataset.csv', 'unauthorized_links_dataset.csv',
-    'cicids2017_sample_subset.csv', 'nsl_kdd_sample_subset.csv', 'ddos_attack_dataset.csv',
-    'dos_attack_dataset.csv', 'port_scan_dataset.csv', 'web_attack_dataset.csv',
+    'ddos_attack_dataset.csv',
+    'dos_attack_dataset.csv',
+    'port_scan_dataset.csv',
+    'web_attack_dataset.csv',
   ]);
 
   const handleRemoveFile = (fileName: string) => {
