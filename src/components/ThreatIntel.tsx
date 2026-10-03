@@ -82,7 +82,7 @@ export default function ThreatIntel() {
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [isDetectionActive]);
+  }, [isDetectionActive, activeAttackTypes]);
 
   useEffect(() => {
     setThreatStats({

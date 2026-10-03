@@ -61,7 +61,7 @@ export default function AttackTimeline() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isDetectionActive]);
+  }, [isDetectionActive, activeAttackTypes]);
 
   const filteredEvents = filter === 'all' ? events : events.filter(e => e.eventType === filter);
 

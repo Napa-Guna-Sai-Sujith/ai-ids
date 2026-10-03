@@ -306,10 +306,10 @@ export default function SystemHealth() {
             ].map((service, index) => (
               <div key={index} className="flex items-center justify-between bg-gray-700/30 rounded-lg p-3">
                 <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full bg-${service.color}-500 animate-pulse`}></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
                   <span className="text-gray-300">{service.name}</span>
                 </div>
-                <span className={`text-${service.color}-400 text-sm font-semibold uppercase`}>
+                <span className="text-green-400 text-sm font-semibold uppercase">
                   {service.status}
                 </span>
               </div>

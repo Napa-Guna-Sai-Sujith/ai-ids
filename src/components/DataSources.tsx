@@ -65,12 +65,20 @@ export default function DataSources() {
       { name: 'dos_attack_dataset.csv', records: 120, size: '25.7 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 119, accuracy: 99.8 },
       { name: 'port_scan_dataset.csv', records: 120, size: '26.0 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 118, accuracy: 99.8 },
       { name: 'web_attack_dataset.csv', records: 120, size: '26.2 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 118, accuracy: 99.8 },
-      { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
-      { name: 'packet_capture_2024.pcap', records: 890000, size: '2.1 GB', format: 'PCAP', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 845000, detectionCount: 3421, accuracy: 98.9 },
     ];
+
+    // Core datasets that must always be visible (never filtered by localStorage)
+    const coreDatasetNames = new Set(defaultFiles.map(f => f.name));
+
     try {
-      const removed = JSON.parse(localStorage.getItem('removed_dataset_files') || '[]');
-      return defaultFiles.filter(f => !removed.includes(f.name));
+      const removed: string[] = JSON.parse(localStorage.getItem('removed_dataset_files') || '[]');
+      // Clean up: remove any core datasets from the removed list so they always show
+      const cleanedRemoved = removed.filter(name => !coreDatasetNames.has(name));
+      if (cleanedRemoved.length !== removed.length) {
+        localStorage.setItem('removed_dataset_files', JSON.stringify(cleanedRemoved));
+      }
+      // Only filter out user-uploaded files that were manually removed, never core datasets
+      return defaultFiles;
     } catch {
       return defaultFiles;
     }
@@ -117,7 +125,18 @@ export default function DataSources() {
       .catch(err => console.warn('Could not fetch DB datasets:', err));
   }, [user?.email]);
 
+  // Core datasets that cannot be removed
+  const CORE_DATASET_NAMES = new Set([
+    'official_nsl_kdd_test.csv', 'official_nsl_kdd_train.csv', 'benign_normal_traffic_dataset.csv',
+    'all_attacks_comprehensive_dataset.csv', 'zero_day_threat_dataset.csv', 'unauthorized_links_dataset.csv',
+    'cicids2017_sample_subset.csv', 'nsl_kdd_sample_subset.csv', 'ddos_attack_dataset.csv',
+    'dos_attack_dataset.csv', 'port_scan_dataset.csv', 'web_attack_dataset.csv',
+  ]);
+
   const handleRemoveFile = (fileName: string) => {
+    // Prevent removal of core benchmark datasets
+    if (CORE_DATASET_NAMES.has(fileName)) return;
+
     if (activeSwitches[fileName]) {
       toggleFileDetection(fileName);
     }
@@ -524,15 +543,21 @@ export default function DataSources() {
                           <Eye className="w-3.5 h-3.5" />
                           <span>View Data</span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFile(file.name)}
-                          title={`Remove ${file.name}`}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Remove</span>
-                        </button>
+                        {!CORE_DATASET_NAMES.has(file.name) ? (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(file.name)}
+                            title={`Remove ${file.name}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Remove</span>
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            🔒 Core
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>

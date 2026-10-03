@@ -20,12 +20,16 @@ export default function ThreatNotificationToast() {
 
   // Auto-dismiss after 7 seconds
   useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
     notifications.forEach((n) => {
       const timer = setTimeout(() => {
         handleDismiss(n.id);
       }, 7000);
-      return () => clearTimeout(timer);
+      timers.push(timer);
     });
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+    };
   }, [notifications]);
 
   const handleDismiss = (id: string) => {
