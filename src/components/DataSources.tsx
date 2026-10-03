@@ -355,14 +355,25 @@ export default function DataSources() {
             </p>
           </div>
 
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <UploadCloud className="w-4 h-4" />
-            Select Dataset File
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href="/sample_datasets/benign_normal_traffic_500_records.csv"
+              download="benign_normal_traffic_500_records.csv"
+              className="px-4 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              title="Download 500-record clean benign traffic dataset with 0 attacks"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Download Clean 500-Record Dataset
+            </a>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <UploadCloud className="w-4 h-4" />
+              Select Dataset File
+            </button>
+          </div>
           <input
             ref={fileInputRef}
             type="file"
