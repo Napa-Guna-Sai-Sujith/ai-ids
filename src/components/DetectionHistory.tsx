@@ -19,6 +19,7 @@ const getAttackColor = (attackType: AttackTypeName): string => {
     'DoS': '#f97316',
     'Port Scan': '#06b6d4',
     'Web Attack': '#ec4899',
+    'BENIGN (Normal Traffic)': '#10b981',
   };
   return colors[attackType] || '#64748b';
 };
@@ -26,6 +27,7 @@ const getAttackColor = (attackType: AttackTypeName): string => {
 export const DetectionHistory: React.FC = () => {
   const { 
     isDetectionActive, 
+    isBenignOnly,
     activeAttackTypes, 
     setLatestDetectedAttack, 
     addNotification,
@@ -52,8 +54,23 @@ export const DetectionHistory: React.FC = () => {
 
   // Generate random detection event matching the active file's attack type & correct severity
   const generateDetection = (): DetectionEvent => {
-    const availableTypes: AttackTypeName[] = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
-    const attackType: AttackTypeName = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+    if (isBenignOnly) {
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: new Date(),
+        attackType: 'BENIGN (Normal Traffic)',
+        severity: 'low',
+        sourceIP: generateIP(),
+        destinationIP: generateIP(),
+        confidence: 99.85 + Math.random() * 0.14,
+        threatLabel: undefined,
+      };
+    }
+
+    const availableTypes: AttackTypeName[] = activeAttackTypes.filter(t => t !== 'BENIGN (Normal Traffic)');
+    const attackType: AttackTypeName = availableTypes.length > 0
+      ? availableTypes[Math.floor(Math.random() * availableTypes.length)]
+      : 'DDoS';
 
     const rand = Math.random();
     let severity: DetectionEvent['severity'] = 'low';
@@ -114,10 +131,10 @@ export const DetectionHistory: React.FC = () => {
       if (Math.random() > 0.4) {
         const newDetection = generateDetection();
         setDetections(prev => [newDetection, ...prev].slice(0, 50));
-        setLatestDetectedAttack(newDetection.attackType);
+        setLatestDetectedAttack(isBenignOnly ? null : newDetection.attackType);
 
-        // Fire pop-up notification for Zero-Day or Unauthorized Link threats with matching metadata
-        if (newDetection.threatLabel) {
+        // Fire pop-up notification ONLY for Zero-Day or Unauthorized Link threats (never in benign mode)
+        if (newDetection.threatLabel && !isBenignOnly) {
           addNotification({
             id: newDetection.id,
             type: newDetection.threatLabel === 'Zero-Day Attack' ? 'zero-day' : 'unauthorized-link',
@@ -147,7 +164,7 @@ export const DetectionHistory: React.FC = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [isDetectionActive, activeAttackTypes]);
+  }, [isDetectionActive, isBenignOnly, activeAttackTypes]);
 
   // Draw chart
   useEffect(() => {
@@ -238,8 +255,16 @@ export const DetectionHistory: React.FC = () => {
 
   }, [chartData]);
 
-  const getSeverityBadge = (severity: DetectionEvent['severity']) => {
-    switch (severity) {
+  const getSeverityBadge = (detection: DetectionEvent) => {
+    if (detection.attackType === 'BENIGN (Normal Traffic)') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          NORMAL
+        </span>
+      );
+    }
+    switch (detection.severity) {
       case 'critical':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
@@ -271,8 +296,19 @@ export const DetectionHistory: React.FC = () => {
     }
   };
 
-  const getActionStatusBadge = (severity: DetectionEvent['severity']) => {
-    if (severity === 'low') {
+  const getActionStatusBadge = (detection: DetectionEvent) => {
+    if (detection.attackType === 'BENIGN (Normal Traffic)') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          ALLOWED (Clean)
+        </span>
+      );
+    }
+
+    if (detection.severity === 'low') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
           <svg className="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -397,7 +433,7 @@ export const DetectionHistory: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-2">
-                        {getSeverityBadge(detection.severity)}
+                        {getSeverityBadge(detection)}
                       </td>
                       <td className="px-4 py-2 text-xs text-slate-400 font-mono">
                         {detection.sourceIP}
@@ -414,7 +450,7 @@ export const DetectionHistory: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-2">
-                        {getActionStatusBadge(detection.severity)}
+                        {getActionStatusBadge(detection)}
                       </td>
                     </tr>
                   );

@@ -3,7 +3,7 @@ import { DetectionState } from '../types';
 import { useDetection } from '../context/DetectionContext';
 
 export default function DetectionStatus() {
-  const { isDetectionActive } = useDetection();
+  const { isDetectionActive, isBenignOnly } = useDetection();
 
   const [state, setState] = useState<DetectionState>({
     isNormal: true,
@@ -27,20 +27,20 @@ export default function DetectionStatus() {
     }
 
     const interval = setInterval(() => {
-      const isNormal = Math.random() > 0.3;
+      const isNormal = isBenignOnly ? true : Math.random() > 0.3;
       setState((prev) => ({
         isNormal,
-        lastScan: new Date().toLocaleTimeString(),
-        threatsBlocked: isNormal ? prev.threatsBlocked : prev.threatsBlocked + 1,
+        lastScan: isBenignOnly ? `${new Date().toLocaleTimeString()} (Clean Traffic Verified)` : new Date().toLocaleTimeString(),
+        threatsBlocked: isBenignOnly ? 0 : isNormal ? prev.threatsBlocked : prev.threatsBlocked + 1,
         activeConnections: Math.floor(Math.random() * 50) + 60,
       }));
-      if (!isNormal) {
+      if (!isNormal && !isBenignOnly) {
         setFlashAttack(true);
         setTimeout(() => setFlashAttack(false), 1500);
       }
     }, 4000);
     return () => clearInterval(interval);
-  }, [isDetectionActive]);
+  }, [isDetectionActive, isBenignOnly]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">

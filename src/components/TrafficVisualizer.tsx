@@ -12,7 +12,7 @@ interface Particle {
 }
 
 export default function TrafficVisualizer() {
-  const { isDetectionActive } = useDetection();
+  const { isDetectionActive, isBenignOnly } = useDetection();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const [stats, setStats] = useState({ normal: 0, suspicious: 0, attack: 0 });
@@ -29,7 +29,13 @@ export default function TrafficVisualizer() {
 
     function spawnParticle(): Particle {
       const rand = Math.random();
-      const type: Particle['type'] = rand < 0.65 ? 'normal' : rand < 0.9 ? 'suspicious' : 'attack';
+      const type: Particle['type'] = isBenignOnly
+        ? 'normal'
+        : rand < 0.65
+        ? 'normal'
+        : rand < 0.9
+        ? 'suspicious'
+        : 'attack';
       const colorOptions = colors[type];
       return {
         id: nextId++,

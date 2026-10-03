@@ -21,7 +21,7 @@ interface GeoData {
 }
 
 export default function ThreatIntel() {
-  const { isDetectionActive, activeAttackTypes } = useDetection();
+  const { isDetectionActive, isBenignOnly, activeAttackTypes } = useDetection();
   const [threats, setThreats] = useState<Threat[]>([]);
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const [geoData] = useState<GeoData[]>([
@@ -40,7 +40,7 @@ export default function ThreatIntel() {
   });
 
   useEffect(() => {
-    if (!isDetectionActive) {
+    if (!isDetectionActive || isBenignOnly) {
       setThreats([]);
       setThreatStats({
         totalThreats: 0,
@@ -51,7 +51,11 @@ export default function ThreatIntel() {
       return;
     }
 
-    const availableTypes = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
+    const availableTypes = activeAttackTypes.filter((t) => t !== 'BENIGN (Normal Traffic)');
+    if (availableTypes.length === 0) {
+      setThreats([]);
+      return;
+    }
     const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
     const statuses: Array<'blocked' | 'pending' | 'investigating'> = ['blocked', 'pending', 'investigating'];
 
@@ -82,7 +86,7 @@ export default function ThreatIntel() {
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [isDetectionActive, activeAttackTypes]);
+  }, [isDetectionActive, isBenignOnly, activeAttackTypes]);
 
   useEffect(() => {
     setThreatStats({

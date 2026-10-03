@@ -19,6 +19,7 @@ interface DetectionContextType {
   activeSwitches: { [fileName: string]: boolean };
   activeFileNames: string[];
   isDetectionActive: boolean;
+  isBenignOnly: boolean;
   activeAttackTypes: AttackTypeName[];
   latestDetectedAttack: AttackTypeName | null;
   setLatestDetectedAttack: (attack: AttackTypeName | null) => void;
@@ -36,13 +37,53 @@ interface DetectionContextType {
 
 const DetectionContext = createContext<DetectionContextType | undefined>(undefined);
 
+export const isBenignFileName = (fileName: string): boolean => {
+  const lower = fileName.toLowerCase();
+  if (
+    lower.includes('benign') ||
+    lower.includes('clean') ||
+    lower.includes('normal') ||
+    lower.includes('safe') ||
+    lower.includes('good') ||
+    lower.includes('legitimate') ||
+    lower.includes('no_attack') ||
+    lower.includes('zero_attack') ||
+    lower.includes('traffic_log')
+  ) {
+    return true;
+  }
+  const hasAttackKeyword =
+    lower.includes('ddos') ||
+    lower.includes('dos') ||
+    lower.includes('port') ||
+    lower.includes('web') ||
+    lower.includes('attack') ||
+    lower.includes('threat') ||
+    lower.includes('scan') ||
+    lower.includes('malware') ||
+    lower.includes('botnet') ||
+    lower.includes('c2') ||
+    lower.includes('exploit');
+  return !hasAttackKeyword;
+};
+
 export const getAttackTypesForFile = (fileName: string): AttackTypeName[] => {
   const lowerName = fileName.toLowerCase();
-  if (lowerName.includes('ddos')) return ['DDoS'];
-  if (lowerName.includes('dos')) return ['DoS'];
-  if (lowerName.includes('port')) return ['Port Scan'];
-  if (lowerName.includes('web')) return ['Web Attack'];
-  return ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
+  if (isBenignFileName(fileName)) {
+    return ['BENIGN (Normal Traffic)'];
+  }
+  const types: AttackTypeName[] = [];
+  if (lowerName.includes('ddos')) types.push('DDoS');
+  if (lowerName.includes('dos') && !lowerName.includes('ddos')) types.push('DoS');
+  if (lowerName.includes('port')) types.push('Port Scan');
+  if (lowerName.includes('web')) types.push('Web Attack');
+  if (types.length === 0) {
+    if (lowerName.includes('attack') || lowerName.includes('threat')) {
+      return ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
+    }
+    return ['BENIGN (Normal Traffic)'];
+  }
+  return types;
 };
 
 export const DetectionProvider = ({ children }: { children: ReactNode }) => {
@@ -77,12 +118,17 @@ export const DetectionProvider = ({ children }: { children: ReactNode }) => {
   });
   const activeAttackTypes = Array.from(activeAttackTypesSet);
 
+  const isBenignOnly =
+    isDetectionActive &&
+    (activeAttackTypes.length === 0 || activeAttackTypes.every((t) => t === 'BENIGN (Normal Traffic)'));
+
   return (
     <DetectionContext.Provider
       value={{
         activeSwitches,
         activeFileNames,
         isDetectionActive,
+        isBenignOnly,
         activeAttackTypes,
         latestDetectedAttack: isDetectionActive ? latestDetectedAttack : null,
         setLatestDetectedAttack,

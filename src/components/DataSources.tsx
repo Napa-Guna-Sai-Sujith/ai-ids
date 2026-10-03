@@ -155,8 +155,24 @@ export default function DataSources() {
       const targetFileName = activeFileNames[Math.floor(Math.random() * activeFileNames.length)];
       const lowerName = targetFileName.toLowerCase();
 
-      let detectedType = 'DDoS';
-      const isBenign = lowerName.includes('benign') || lowerName.includes('clean');
+      const isBenign =
+        lowerName.includes('benign') ||
+        lowerName.includes('clean') ||
+        lowerName.includes('normal') ||
+        lowerName.includes('safe') ||
+        lowerName.includes('good') ||
+        lowerName.includes('legitimate') ||
+        lowerName.includes('no_attack') ||
+        lowerName.includes('zero_attack') ||
+        lowerName.includes('traffic_log') ||
+        (!lowerName.includes('ddos') &&
+          !lowerName.includes('dos') &&
+          !lowerName.includes('port') &&
+          !lowerName.includes('web') &&
+          !lowerName.includes('attack') &&
+          !lowerName.includes('threat'));
+
+      let detectedType = 'BENIGN (Normal Traffic)';
 
       if (isBenign) {
         detectedType = 'BENIGN (Normal Traffic)';
@@ -169,8 +185,7 @@ export default function DataSources() {
       } else if (lowerName.includes('web')) {
         detectedType = 'Web Attack';
       } else {
-        const attackTypes = ['DDoS', 'DoS', 'Port Scan', 'Web Attack'];
-        detectedType = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+        detectedType = 'BENIGN (Normal Traffic)';
       }
 
       const newUsage: ActiveUsage = {
@@ -180,7 +195,7 @@ export default function DataSources() {
         status: 'Analyzed',
         timestamp: new Date().toLocaleTimeString(),
         attackType: detectedType,
-        confidence: isBenign ? 99.8 : Math.floor(Math.random() * 10) + 90,
+        confidence: isBenign ? 99.85 : Math.floor(Math.random() * 10) + 90,
       };
 
       setActiveUsage(prev => [newUsage, ...prev].slice(0, 20));
@@ -193,7 +208,7 @@ export default function DataSources() {
             return {
               ...f,
               recordsAnalyzed: Math.min(f.records, f.recordsAnalyzed + newUsage.recordsAnalyzed),
-              detectionCount: f.detectionCount + addedDetections,
+              detectionCount: isBenign ? 0 : f.detectionCount + addedDetections,
               lastUpdated: 'Just now',
             };
           }
@@ -222,6 +237,24 @@ export default function DataSources() {
     if (['JSON', 'XML', 'PCAP', 'LOG', 'ZIP'].includes(ext)) {
       format = ext as DatasetFile['format'];
     }
+
+    const lower = file.name.toLowerCase();
+    const isBenign =
+      lower.includes('benign') ||
+      lower.includes('clean') ||
+      lower.includes('normal') ||
+      lower.includes('safe') ||
+      lower.includes('good') ||
+      lower.includes('legitimate') ||
+      lower.includes('no_attack') ||
+      lower.includes('zero_attack') ||
+      lower.includes('traffic_log') ||
+      (!lower.includes('ddos') &&
+        !lower.includes('dos') &&
+        !lower.includes('port') &&
+        !lower.includes('web') &&
+        !lower.includes('attack') &&
+        !lower.includes('threat'));
 
     setIsUploading(true);
     setUploadProgress(10);
@@ -253,8 +286,8 @@ export default function DataSources() {
         status: 'Active',
         lastUpdated: 'Just now',
         recordsAnalyzed: Math.floor(estimatedRecords * 0.1),
-        detectionCount: 12,
-        accuracy: 99.5,
+        detectionCount: isBenign ? 0 : 12,
+        accuracy: isBenign ? 99.9 : 99.5,
       };
 
       setDatasetFiles(prev => [newDataset, ...prev]);
@@ -264,7 +297,11 @@ export default function DataSources() {
         toggleFileDetection(file.name);
       }
 
-      setUploadSuccess(`"${file.name}" uploaded successfully! AI Detection switch automatically activated & live analysis started.`);
+      setUploadSuccess(
+        isBenign
+          ? `"${file.name}" uploaded successfully! 0 attacks detected (Clean/Benign dataset). Live normal traffic monitoring active.`
+          : `"${file.name}" uploaded successfully! AI Detection switch automatically activated & live analysis started.`
+      );
       setTrainingStatus(`AI Engine actively analyzing custom dataset "${file.name}"...`);
 
       // Persist to Neon DB if user is logged in
@@ -284,7 +321,11 @@ export default function DataSources() {
           prev.map(f => (f.name === file.name ? { ...f, status: 'Active', recordsAnalyzed: estimatedRecords } : f))
         );
         setTrainingStatus(null);
-        setUploadSuccess(`AI model automatically fine-tuned & actively analyzing ${file.name}!`);
+        setUploadSuccess(
+          isBenign
+            ? `AI model verified 0 attacks in "${file.name}". System state: Normal / Secure!`
+            : `AI model automatically fine-tuned & actively analyzing ${file.name}!`
+        );
       }, 3000);
     }, 1200);
   };

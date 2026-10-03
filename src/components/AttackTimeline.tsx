@@ -12,7 +12,7 @@ interface TimelineEvent {
 }
 
 export default function AttackTimeline() {
-  const { isDetectionActive, activeAttackTypes } = useDetection();
+  const { isDetectionActive, isBenignOnly, activeAttackTypes } = useDetection();
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [filter, setFilter] = useState<'all' | 'attack' | 'block' | 'alert' | 'scan'>('all');
 
@@ -22,8 +22,10 @@ export default function AttackTimeline() {
       return;
     }
 
-    const eventTypes: Array<TimelineEvent['eventType']> = ['attack', 'block', 'alert', 'scan'];
-    const availableTypes = activeAttackTypes.length > 0 ? activeAttackTypes : ['DDoS'];
+    const eventTypes: Array<TimelineEvent['eventType']> = isBenignOnly
+      ? ['scan', 'alert']
+      : ['attack', 'block', 'alert', 'scan'];
+    const availableTypes = activeAttackTypes.filter((t) => t !== 'BENIGN (Normal Traffic)');
     const severities: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low'];
 
     const generateEvent = (): TimelineEvent => {
@@ -32,20 +34,31 @@ export default function AttackTimeline() {
         id: Math.random().toString(36).substr(2, 9),
         timestamp: new Date(),
         eventType,
-        attackType: eventType === 'attack' ? availableTypes[Math.floor(Math.random() * availableTypes.length)] : undefined,
+        attackType:
+          eventType === 'attack' && availableTypes.length > 0
+            ? availableTypes[Math.floor(Math.random() * availableTypes.length)]
+            : undefined,
         severity: eventType === 'attack' ? severities[Math.floor(Math.random() * severities.length)] : undefined,
-        source: eventType === 'attack' || eventType === 'block' ? `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}` : undefined,
+        source:
+          eventType === 'attack' || eventType === 'block'
+            ? `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
+            : undefined,
         description: getEventDescription(eventType),
       };
     };
 
     const getEventDescription = (type: string): string => {
       switch (type) {
-        case 'attack': return 'Malicious traffic detected and analyzed';
-        case 'block': return 'Threat successfully blocked by firewall';
-        case 'alert': return 'Security alert triggered for review';
-        case 'scan': return 'Network scan completed';
-        default: return 'System event recorded';
+        case 'attack':
+          return 'Malicious traffic detected and analyzed';
+        case 'block':
+          return 'Threat successfully blocked by firewall';
+        case 'alert':
+          return isBenignOnly ? 'Legitimate traffic stream verified secure' : 'Security alert triggered for review';
+        case 'scan':
+          return isBenignOnly ? 'Deep packet scan passed (0 threats)' : 'Network scan completed';
+        default:
+          return 'System event recorded';
       }
     };
 
@@ -56,12 +69,12 @@ export default function AttackTimeline() {
     const interval = setInterval(() => {
       if (Math.random() > 0.3) {
         const newEvent = generateEvent();
-        setEvents(prev => [newEvent, ...prev.slice(0, 99)]);
+        setEvents((prev) => [newEvent, ...prev.slice(0, 99)]);
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isDetectionActive, activeAttackTypes]);
+  }, [isDetectionActive, isBenignOnly, activeAttackTypes]);
 
   const filteredEvents = filter === 'all' ? events : events.filter(e => e.eventType === filter);
 

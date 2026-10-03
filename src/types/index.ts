@@ -1,4 +1,4 @@
-export type AttackTypeName = 'DDoS' | 'DoS' | 'Port Scan' | 'Web Attack';
+export type AttackTypeName = 'DDoS' | 'DoS' | 'Port Scan' | 'Web Attack' | 'BENIGN (Normal Traffic)';
 
 export interface AttackType {
   id: string;
