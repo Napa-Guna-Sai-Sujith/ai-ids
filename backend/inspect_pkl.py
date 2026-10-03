@@ -9,36 +9,42 @@ Usage:
 
 import pickle
 import os
+import sys
+
+# Ensure UTF-8 output on Windows terminal
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding='utf-8')
 
 def inspect_pkl_file(file_path):
-    print("=" * 60)
-    print(f"  📦 INSPECTING TRAINED MODEL FILE: {file_path}")
-    print("=" * 60)
+    print("=" * 65)
+    print(f"  [+] INSPECTING TRAINED MODEL FILE: {file_path}")
+    print("=" * 65)
     
     if not os.path.exists(file_path):
-        print(f"[!] File not found: {file_path}")
+        print(f"  [!] File not found: {file_path}")
         return
 
     with open(file_path, 'rb') as f:
         model = pickle.load(f)
 
-    print(f"  • Object Type:        {type(model).__name__}")
-    print(f"  • Module Source:      {type(model).__module__}")
+    print(f"  * Object Type:        {type(model).__name__}")
+    print(f"  * Module Source:      {type(model).__module__}")
     
     if hasattr(model, 'n_estimators'):
-        print(f"  • Decision Trees:     {model.n_estimators}")
+        print(f"  * Decision Trees:     {model.n_estimators} trees in forest")
     if hasattr(model, 'n_features_in_'):
-        print(f"  • Input Features:     {model.n_features_in_} Extracted Flow Features")
+        print(f"  * Input Features:     {model.n_features_in_} NetFlow statistical features")
     if hasattr(model, 'classes_'):
-        print(f"  • Trained Classes:    {list(model.classes_)}")
+        print(f"  * Trained Classes:    {list(model.classes_)}")
     if hasattr(model, 'estimators_'):
-        print(f"  • Sub-models (Voting): {[e[0] for e in model.estimators] if hasattr(model, 'estimators') else len(model.estimators_)}")
+        print(f"  * Ensemble Members:   {len(model.estimators_)} fitted estimators")
 
-    print("\n  • Model Hyperparameters & Parameters:")
-    for key, val in list(model.get_params().items())[:6]:
-        print(f"    - {key}: {val}")
+    if hasattr(model, 'get_params'):
+        print("\n  * Tuned Model Hyperparameters:")
+        for key, val in list(model.get_params().items())[:6]:
+            print(f"    - {key}: {val}")
 
-    print("=" * 60 + "\n")
+    print("=" * 65 + "\n")
 
 if __name__ == "__main__":
     inspect_pkl_file("backend/models/trained_ids_ensemble.pkl")

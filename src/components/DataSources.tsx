@@ -55,12 +55,16 @@ export default function DataSources() {
     const defaultFiles: DatasetFile[] = [
       { name: 'benign_normal_traffic_dataset.csv', records: 125, size: '26.0 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 125, detectionCount: 0, accuracy: 99.9 },
       { name: 'all_attacks_comprehensive_dataset.csv', records: 130, size: '28.1 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 130, detectionCount: 124, accuracy: 99.8 },
+      { name: 'zero_day_threat_dataset.csv', records: 120, size: '26.4 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 119, accuracy: 99.7 },
+      { name: 'unauthorized_links_dataset.csv', records: 120, size: '25.8 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 118, accuracy: 99.8 },
+      { name: 'cicids2017_sample_subset.csv', records: 150, size: '32.1 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 150, detectionCount: 148, accuracy: 99.8 },
+      { name: 'nsl_kdd_sample_subset.csv', records: 150, size: '31.5 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 150, detectionCount: 146, accuracy: 99.7 },
+      { name: 'ddos_attack_dataset.csv', records: 120, size: '25.9 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 119, accuracy: 99.9 },
+      { name: 'dos_attack_dataset.csv', records: 120, size: '25.7 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 119, accuracy: 99.8 },
+      { name: 'port_scan_dataset.csv', records: 120, size: '26.0 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 118, accuracy: 99.8 },
+      { name: 'web_attack_dataset.csv', records: 120, size: '26.2 KB', format: 'CSV', status: 'Active', lastUpdated: 'Just now', recordsAnalyzed: 120, detectionCount: 118, accuracy: 99.8 },
       { name: 'network_traffic_log.csv', records: 125000, size: '45.2 MB', format: 'CSV', status: 'Active', lastUpdated: '2 min ago', recordsAnalyzed: 124500, detectionCount: 1247, accuracy: 99.2 },
-      { name: 'attack_signatures.json', records: 2500, size: '1.8 MB', format: 'JSON', status: 'Active', lastUpdated: '5 min ago', recordsAnalyzed: 2500, detectionCount: 892, accuracy: 99.8 },
       { name: 'packet_capture_2024.pcap', records: 890000, size: '2.1 GB', format: 'PCAP', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 845000, detectionCount: 3421, accuracy: 98.9 },
-      { name: 'malware_indicators.xml', records: 15000, size: '850 KB', format: 'XML', status: 'Active', lastUpdated: '10 min ago', recordsAnalyzed: 15000, detectionCount: 567, accuracy: 99.5 },
-      { name: 'user_behavior_log.csv', records: 450000, size: '128 MB', format: 'CSV', status: 'Active', lastUpdated: '1 min ago', recordsAnalyzed: 448000, detectionCount: 2103, accuracy: 99.1 },
-      { name: 'firewall_events.log', records: 2100000, size: '560 MB', format: 'LOG', status: 'Streaming', lastUpdated: 'Live', recordsAnalyzed: 2050000, detectionCount: 4521, accuracy: 99.4 },
     ];
     try {
       const removed = JSON.parse(localStorage.getItem('removed_dataset_files') || '[]');
@@ -378,7 +382,7 @@ export default function DataSources() {
               <p className="text-xs text-slate-400">Download test datasets to test detection upload capabilities for all intrusion types:</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
             <a
               href="/sample_datasets/benign_normal_traffic_dataset.csv"
               download="benign_normal_traffic_dataset.csv"
@@ -396,11 +400,43 @@ export default function DataSources() {
               <span className="text-[10px] bg-purple-500/30 px-1.5 py-0.5 rounded text-purple-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
             </a>
             <a
+              href="/sample_datasets/zero_day_threat_dataset.csv"
+              download="zero_day_threat_dataset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-red-600/10 border border-red-600/30 hover:bg-red-600/20 text-red-300 text-xs font-semibold transition-all group"
+            >
+              <span>🚨 Zero-Day (120 Recs)</span>
+              <span className="text-[10px] bg-red-600/30 px-1.5 py-0.5 rounded text-red-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
+            <a
+              href="/sample_datasets/unauthorized_links_dataset.csv"
+              download="unauthorized_links_dataset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-indigo-300 text-xs font-semibold transition-all group"
+            >
+              <span>🔗 Unauth Links (120)</span>
+              <span className="text-[10px] bg-indigo-500/30 px-1.5 py-0.5 rounded text-indigo-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
+            <a
+              href="/sample_datasets/cicids2017_sample_subset.csv"
+              download="cicids2017_sample_subset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20 text-blue-300 text-xs font-semibold transition-all group"
+            >
+              <span>🌐 CICIDS2017 (150)</span>
+              <span className="text-[10px] bg-blue-500/30 px-1.5 py-0.5 rounded text-blue-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
+            <a
+              href="/sample_datasets/nsl_kdd_sample_subset.csv"
+              download="nsl_kdd_sample_subset.csv"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-teal-500/10 border border-teal-500/30 hover:bg-teal-500/20 text-teal-300 text-xs font-semibold transition-all group"
+            >
+              <span>📊 NSL-KDD (150)</span>
+              <span className="text-[10px] bg-teal-500/30 px-1.5 py-0.5 rounded text-teal-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
+            </a>
+            <a
               href="/sample_datasets/ddos_attack_dataset.csv"
               download="ddos_attack_dataset.csv"
               className="flex items-center justify-between p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-300 text-xs font-semibold transition-all group"
             >
-              <span>💥 DDoS CSV</span>
+              <span>💥 DDoS (120 Recs)</span>
               <span className="text-[10px] bg-red-500/30 px-1.5 py-0.5 rounded text-red-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
             </a>
             <a
@@ -408,7 +444,7 @@ export default function DataSources() {
               download="dos_attack_dataset.csv"
               className="flex items-center justify-between p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 text-orange-300 text-xs font-semibold transition-all group"
             >
-              <span>🔥 DoS CSV</span>
+              <span>🔥 DoS (120 Recs)</span>
               <span className="text-[10px] bg-orange-500/30 px-1.5 py-0.5 rounded text-orange-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
             </a>
             <a
@@ -416,7 +452,7 @@ export default function DataSources() {
               download="port_scan_dataset.csv"
               className="flex items-center justify-between p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold transition-all group"
             >
-              <span>🔍 Port Scan CSV</span>
+              <span>🔍 Port Scan (120)</span>
               <span className="text-[10px] bg-cyan-500/30 px-1.5 py-0.5 rounded text-cyan-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
             </a>
             <a
@@ -424,7 +460,7 @@ export default function DataSources() {
               download="web_attack_dataset.csv"
               className="flex items-center justify-between p-2.5 rounded-lg bg-pink-500/10 border border-pink-500/30 hover:bg-pink-500/20 text-pink-300 text-xs font-semibold transition-all group"
             >
-              <span>🌐 Web Attack CSV</span>
+              <span>🌐 Web Attack (120)</span>
               <span className="text-[10px] bg-pink-500/30 px-1.5 py-0.5 rounded text-pink-200 group-hover:scale-105 transition-transform">Download ⬇️</span>
             </a>
           </div>
